@@ -44,7 +44,8 @@ package body Serialization is
 		case Object.Direction is
 			when Reading =>
 				if Name = Next_Name (Object.Reader).all then
-					Value := Ada.Strings.Unbounded.To_Unbounded_String (
+					Ada.Strings.Unbounded.Set_Unbounded_String (
+						Value,
 						Next_Value (Object.Reader).all);
 				end if;
 			when Writing =>

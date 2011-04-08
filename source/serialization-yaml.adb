@@ -146,7 +146,7 @@ package body Serialization.YAML is
 				Object.Next_Name := new String'(Event.Value.all);
 				Standard.YAML.Parse (Object.Parser.all, Process_Value'Access);
 			else
-				Handle (Object, Event);
+				Handle (Object, Event); -- complex mapping key
 			end if;
 		end Process_Name;
 	begin

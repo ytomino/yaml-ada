@@ -5,21 +5,41 @@ with Serialization.YAML;
 with YAML.Streams;
 procedure test_serialize is
 	Test_File_Name : constant String := "test_serialize.yaml";
+	type Nested_Map is record
+		A : Integer;
+	end record;
+	procedure IO (
+		S : not null access Serialization.Serializer;
+		Name : String;
+		Var : in out Nested_Map)
+	is
+		procedure Process is
+		begin
+			Serialization.IO (S, "A", Var.A);
+		end Process;
+	begin
+		Serialization.IO (S, Name, Process'Access);
+	end IO;
 	type T is record
 		X : Ada.Strings.Unbounded.Unbounded_String;
 		Y : Boolean;
+		Z : Nested_Map;
 	end record;
 	procedure IO (S : not null access Serialization.Serializer; Var : in out T) is
 		procedure Process is
 		begin
 			Serialization.IO (S, "X", Var.X);
 			Serialization.IO (S, "Y", Var.Y);
+			IO (S, "Z", Var.Z);
 		end Process;
 	begin
 		Serialization.IO (S, Process'Access);
 	end IO;
 	Root_Tag : constant String := "ROOT-TAG";
-	Data : T := (Ada.Strings.Unbounded.To_Unbounded_String ("XYZ"), True);
+	Data : T := (
+		X => Ada.Strings.Unbounded.To_Unbounded_String ("XYZ"),
+		Y => True,
+		Z => (A => 100));
 begin
 	declare
 		W : aliased YAML.Emitter := YAML.Create (Ada.Text_IO.Put'Access);
@@ -50,7 +70,10 @@ begin
 	end;
 	declare
 		File : Ada.Streams.Stream_IO.File_Type;
-		Data2 : T;
+		Data2 : T := (
+			X => Ada.Strings.Unbounded.Null_Unbounded_String,
+			Y => False,
+			Z => (A => 0));
 	begin
 		Ada.Streams.Stream_IO.Open (
 			File,

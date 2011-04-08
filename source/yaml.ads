@@ -1,5 +1,5 @@
 with Ada.IO_Exceptions;
-with C.yaml;
+private with C.yaml;
 private with Ada.Finalization;
 package YAML is
 	pragma Preelaborate;
@@ -35,41 +35,45 @@ package YAML is
 	type Sequence_Style is (Any, Block, Flow);
 	type Mapping_Style is (Any, Block, Flow);
 	
-	type Event_Type is (
-		No_Event, -- An empty event.
-		Stream_Start, -- A STREAM-START event.
-		Stream_End, -- A STREAM-END event.
-		Document_Start, -- A DOCUMENT-START event.
-		Document_End, -- A DOCUMENT-END event.
-		Alias, -- An ALIAS event.
-		Scalar, -- A SCALAR event.
-		Sequence_Start, -- A SEQUENCE-START event.
-		Sequence_End, -- A SEQUENCE-END event.
-		Mapping_Start, -- A MAPPING-START event.
-		Mapping_End); -- A MAPPING-END event.
-	for Event_Type use (
-		No_Event => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_NO_EVENT),
-		Stream_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_STREAM_START_EVENT),
-		Stream_End => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_STREAM_END_EVENT),
-		Document_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_DOCUMENT_START_EVENT),
-		Document_End => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_DOCUMENT_END_EVENT),
-		Alias => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_ALIAS_EVENT),
-		Scalar => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_SCALAR_EVENT),
-		Sequence_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_SEQUENCE_START_EVENT),
-		Sequence_End => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_SEQUENCE_END_EVENT),
-		Mapping_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_MAPPING_START_EVENT),
-		Mapping_End => C.yaml.yaml_event_type_t'Enum_Rep (
-			C.yaml.YAML_MAPPING_END_EVENT));
+	package Event_Types is
+		type Event_Type is (
+			No_Event, -- An empty event.
+			Stream_Start, -- A STREAM-START event.
+			Stream_End, -- A STREAM-END event.
+			Document_Start, -- A DOCUMENT-START event.
+			Document_End, -- A DOCUMENT-END event.
+			Alias, -- An ALIAS event.
+			Scalar, -- A SCALAR event.
+			Sequence_Start, -- A SEQUENCE-START event.
+			Sequence_End, -- A SEQUENCE-END event.
+			Mapping_Start, -- A MAPPING-START event.
+			Mapping_End); -- A MAPPING-END event.
+	private
+		for Event_Type use (
+			No_Event => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_NO_EVENT),
+			Stream_Start => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_STREAM_START_EVENT),
+			Stream_End => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_STREAM_END_EVENT),
+			Document_Start => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_DOCUMENT_START_EVENT),
+			Document_End => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_DOCUMENT_END_EVENT),
+			Alias => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_ALIAS_EVENT),
+			Scalar => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_SCALAR_EVENT),
+			Sequence_Start => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_SEQUENCE_START_EVENT),
+			Sequence_End => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_SEQUENCE_END_EVENT),
+			Mapping_Start => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_MAPPING_START_EVENT),
+			Mapping_End => C.yaml.yaml_event_type_t'Enum_Rep (
+				C.yaml.YAML_MAPPING_END_EVENT));
+	end Event_Types;
+	type Event_Type is new Event_Types.Event_Type;
 	
 	type Event (Event_Type : YAML.Event_Type) is record
 		case Event_Type is

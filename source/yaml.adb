@@ -54,11 +54,18 @@ package body YAML is
 		String,
 		String_Access);
 	
-	function To_String (S : not null access constant C.char) return String is
-		Result : String (1 .. Natural (C.string.strlen (S)));
-		for Result'Address use S.all'Address;
+	function To_String (S : access constant C.char) return String is
 	begin
-		return Result;
+		if S = null then
+			return "";
+		else
+			declare
+				Result : String (1 .. Natural (C.string.strlen (S)));
+				for Result'Address use S.all'Address;
+			begin
+				return Result;
+			end;
+		end if;
 	end To_String;
 	
 	function New_String (S : C.yaml.yaml_char_t_ptr) return String_Access is
@@ -598,6 +605,7 @@ package body YAML is
 					Start_Mark,
 					End_Mark);
 		end case;
+		C.yaml.yaml_event_delete (Ev'Access);
 	end Parse;
 	
 	procedure Parse_Document_Start (Object : in out Parser) is
