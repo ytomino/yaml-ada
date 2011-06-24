@@ -193,12 +193,18 @@ package body Serialization is
 			Object : not null access Serializer;
 			Name : in String;
 			Value : in out Container_Type;
-			Callback : not null access procedure (Item : in out Element_Type))
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type))
 		is
-			procedure Thunk (Position : in Cursor) is
+			procedure Process_Update (Item : in out Element_Type) is
 			begin
-				Update_Element (Value, Position, Callback);
-			end Thunk;
+				Callback (Object, Item);
+			end Process_Update;
+			procedure Process_Iterate (Position : in Cursor) is
+			begin
+				Update_Element (Value, Position, Process_Update'Access);
+			end Process_Iterate;
 		begin
 			case Object.Direction is
 				when Reading =>
@@ -209,13 +215,13 @@ package body Serialization is
 						Advance (Object.Reader, In_Sequence);
 						while Next_Kind (Object.Reader) /= Leave_Sequence loop
 							Append (Value, Default);
-							Update_Element (Value, Last (Value), Callback);
+							Update_Element (Value, Last (Value), Process_Update'Access);
 							Advance_Structure (Object.Reader, In_Sequence);
 						end loop;
 					end if;
 				when Writing =>
 					Enter_Sequence (Object.Writer, Name);
-					Iterate (Value, Thunk'Access);
+					Iterate (Value, Process_Iterate'Access);
 					Leave_Sequence (Object.Writer);
 			end case;
 		end IO;
@@ -223,12 +229,70 @@ package body Serialization is
 		procedure IO (
 			Object : not null access Serializer;
 			Value : in out Container_Type;
-			Callback : not null access procedure (Item : in out Element_Type)) is
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
 		begin
 			IO (Object, "", Value, Callback);
 		end IO;
 		
 	end IO_List;
+	
+	package body IO_Set is
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Name : in String;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type))
+		is
+			procedure Process_Query (Item : in Element_Type) is
+				Mutable_Item : Element_Type := Item;
+			begin
+				Callback (Object, Mutable_Item);
+			end Process_Query;
+			procedure Process_Iterate (Position : in Cursor) is
+			begin
+				Query_Element (Position, Process_Query'Access);
+			end Process_Iterate;
+		begin
+			case Object.Direction is
+				when Reading =>
+					if Name = Next_Name (Object.Reader).all
+						and then Next_Kind (Object.Reader) = Enter_Sequence
+					then
+						Clear (Value);
+						Advance (Object.Reader, In_Sequence);
+						while Next_Kind (Object.Reader) /= Leave_Sequence loop
+							declare
+								New_Item : Element_Type := Default;
+							begin
+								Callback (Object, New_Item);
+								Insert (Value, New_Item);
+							end;
+							Advance_Structure (Object.Reader, In_Sequence);
+						end loop;
+					end if;
+				when Writing =>
+					Enter_Sequence (Object.Writer, Name);
+					Iterate (Value, Process_Iterate'Access);
+					Leave_Sequence (Object.Writer);
+			end case;
+		end IO;
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			IO (Object, "", Value, Callback);
+		end IO;
+		
+	end IO_Set;
 	
 	package body IO_Array is
 		
@@ -236,7 +300,9 @@ package body Serialization is
 			Object : not null access Serializer;
 			Name : in String;
 			Value : in out Array_Access;
-			Callback : not null access procedure (Item : in out Element_Type)) is
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
 		begin
 			case Object.Direction is
 				when Reading =>
@@ -277,7 +343,7 @@ package body Serialization is
 								end if;
 								Last := Index_Type'Succ (Last);
 								Value (Last) := Default;
-								Callback.all (Value (Last));
+								Callback.all (Object, Value (Last));
 								Advance_Structure (Object.Reader, In_Sequence);
 							end loop;
 							if Value /= null and then Last < Value'Last then
@@ -297,7 +363,7 @@ package body Serialization is
 					Enter_Sequence (Object.Writer, Name);
 					if Value /= null then
 						for I in Value'Range loop
-							Callback.all (Value (I));
+							Callback.all (Object, Value (I));
 						end loop;
 					end if;
 					Leave_Sequence (Object.Writer);
@@ -307,7 +373,9 @@ package body Serialization is
 		procedure IO (
 			Object : not null access Serializer;
 			Value : in out Array_Access;
-			Callback : not null access procedure (Item : in out Element_Type)) is
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
 		begin
 			IO (Object, "", Value, Callback);
 		end IO;

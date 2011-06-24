@@ -110,14 +110,14 @@ package Serialization is
 	-- sequence
 	
 	generic
-		type Container_Type is limited private;
 		type Cursor is private;
 		type Element_Type is private;
+		type Container_Type is limited private;
 		Default : in Element_Type;
 		with function Last (Container : Container_Type) return Cursor is <>;
 		with procedure Iterate (
 			Container : in Container_Type;
-			Process : not null access procedure (Position : Cursor)) is <>;
+			Process : not null access procedure (Position : in Cursor)) is <>;
 		with procedure Update_Element (
 			Container : in out Container_Type;
 			Position : in Cursor;
@@ -132,12 +132,47 @@ package Serialization is
 			Object : not null access Serializer;
 			Name : in String;
 			Value : in out Container_Type;
-			Callback : not null access procedure (Item : in out Element_Type));
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type));
 		procedure IO (
 			Object : not null access Serializer;
 			Value : in out Container_Type;
-			Callback : not null access procedure (Item : in out Element_Type));
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type));
 	end IO_List;
+	
+	generic
+		type Cursor is private;
+		type Element_Type is private;
+		type Container_Type is limited private;
+		Default : in Element_Type;
+		with procedure Iterate (
+			Container : in Container_Type;
+			Process : not null access procedure (Position : in Cursor)) is <>;
+		with procedure Query_Element (
+			Position : in Cursor;
+			Process : not null access procedure (Item : in Element_Type)) is <>;
+		with procedure Insert (
+			Container : in out Container_Type;
+			New_Item : in Element_Type) is <>;
+		with procedure Clear (Container : in out Container_Type) is <>;
+	package IO_Set is
+		procedure IO (
+			Object : not null access Serializer;
+			Name : in String;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type));
+		procedure IO (
+			Object : not null access Serializer;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type));
+	end IO_Set;
 	
 	generic
 		type Index_Type is (<>);
@@ -151,11 +186,15 @@ package Serialization is
 			Object : not null access Serializer;
 			Name : in String;
 			Value : in out Array_Access;
-			Callback : not null access procedure (Item : in out Element_Type));
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type));
 		procedure IO (
 			Object : not null access Serializer;
 			Value : in out Array_Access;
-			Callback : not null access procedure (Item : in out Element_Type));
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type));
 	end IO_Array;
 	
 private
