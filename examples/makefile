@@ -27,7 +27,7 @@ CFLAGS=-gnata -gnatwa -gnatyy-3chbs
 
 .PHONY: all clean
 
-all: $(BUILDDIR)/test_yaml $(BUILDDIR)/test_serialize
+all: $(BUILDDIR)/test_yaml $(BUILDDIR)/test_serialize $(BUILDDIR)/version
 
 $(BUILDDIR)/%: %.adb $(BUILDDIR) $(IMPORTDIR) $(wildcard $(SOURCEDIR)/*)
 	cd $(BUILDDIR) && $(GNATMAKE) -g $(MFLAGS) -I../$(SOURCEDIR) -I../$(IMPORTDIR) $(CFLAGS) ../$< -largs $(LFLAGS)

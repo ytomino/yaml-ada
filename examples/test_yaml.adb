@@ -129,7 +129,6 @@ procedure test_yaml is
 		new YAML.Event'(
 			Event_Type => YAML.Stream_End));
 begin
-	Ada.Text_IO.Put_Line (YAML.Version);
 	declare
 		W : YAML.Emitter := YAML.Create (Ada.Text_IO.Put'Access);
 	begin
