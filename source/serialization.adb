@@ -132,12 +132,14 @@ package body Serialization is
 	procedure IO (
 		Object : not null access Serializer;
 		Name : in String;
-		Value : in out Integer) renames IO_Integer.IO;
+		Value : in out Integer)
+		renames IO_Integer.IO;
 	procedure IO (
 		Object : not null access Serializer;
 		Name : in String;
 		Value : in out Integer;
-		Default : in Integer) renames IO_Integer.IO;
+		Default : in Integer)
+		renames IO_Integer.IO;
 	
 	package IO_Boolean is new IO_Custom (
 		Boolean,
@@ -148,12 +150,14 @@ package body Serialization is
 	procedure IO (
 		Object : not null access Serializer;
 		Name : in String;
-		Value : in out Boolean) renames IO_Boolean.IO;
+		Value : in out Boolean)
+		renames IO_Boolean.IO;
 	procedure IO (
 		Object : not null access Serializer;
 		Name : in String;
 		Value : in out Boolean;
-		Default : in Boolean) renames IO_Boolean.IO;
+		Default : in Boolean)
+		renames IO_Boolean.IO;
 	
 	procedure IO (
 		Object : not null access Serializer;
@@ -185,7 +189,7 @@ package body Serialization is
 		IO (Object, "", Callback);
 	end IO;
 	
-	package body IO_List is
+	package body IO_Map_2005 is
 		
 		procedure IO (
 			Object : not null access Serializer;
@@ -193,16 +197,13 @@ package body Serialization is
 			Value : in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
+				Name : in String;
 				Item : in out Element_Type))
 		is
-			procedure Process_Update (Item : in out Element_Type) is
+			procedure Process_Update (Key : in String; Item : in out Element_Type) is
 			begin
-				Callback (Object, Item);
+				Callback (Object, Key, Item);
 			end Process_Update;
-			procedure Process_Iterate (Position : in Cursor) is
-			begin
-				Update_Element (Value, Position, Process_Update'Access);
-			end Process_Iterate;
 		begin
 			case Object.Direction is
 				when Reading =>
@@ -210,73 +211,37 @@ package body Serialization is
 						and then Next_Kind (Object.Reader) = Enter_Sequence
 					then
 						Clear (Value);
-						Advance (Object.Reader, In_Sequence);
-						while Next_Kind (Object.Reader) /= Leave_Sequence loop
-							Append (Value, Default);
-							Update_Element (Value, Last (Value), Process_Update'Access);
-							Advance_Structure (Object.Reader, In_Sequence);
-						end loop;
-					end if;
-				when Writing =>
-					Enter_Sequence (Object.Writer, Name);
-					Iterate (Value, Process_Iterate'Access);
-					Leave_Sequence (Object.Writer);
-			end case;
-		end IO;
-		
-		procedure IO (
-			Object : not null access Serializer;
-			Value : in out Container_Type;
-			Callback : not null access procedure (
-				Object : not null access Serializer;
-				Item : in out Element_Type)) is
-		begin
-			IO (Object, "", Value, Callback);
-		end IO;
-		
-	end IO_List;
-	
-	package body IO_Set is
-		
-		procedure IO (
-			Object : not null access Serializer;
-			Name : in String;
-			Value : in out Container_Type;
-			Callback : not null access procedure (
-				Object : not null access Serializer;
-				Item : in out Element_Type))
-		is
-			procedure Process_Query (Item : in Element_Type) is
-				Mutable_Item : Element_Type := Item;
-			begin
-				Callback (Object, Mutable_Item);
-			end Process_Query;
-			procedure Process_Iterate (Position : in Cursor) is
-			begin
-				Query_Element (Position, Process_Query'Access);
-			end Process_Iterate;
-		begin
-			case Object.Direction is
-				when Reading =>
-					if Name = Next_Name (Object.Reader).all
-						and then Next_Kind (Object.Reader) = Enter_Sequence
-					then
-						Clear (Value);
-						Advance (Object.Reader, In_Sequence);
+						Advance (Object.Reader, In_Mapping);
 						while Next_Kind (Object.Reader) /= Leave_Sequence loop
 							declare
-								New_Item : Element_Type := Default;
+								Position : Cursor;
+								Inserted : Boolean;
 							begin
-								Callback (Object, New_Item);
-								Insert (Value, New_Item);
+								Insert (
+									Value,
+									Next_Name (Object.Reader).all,
+									Default,
+									Position,
+									Inserted);
+								if not Inserted then
+									raise Constraint_Error;
+								end if;
+								Update_Element (Value, Position, Process_Update'Access);
 							end;
-							Advance_Structure (Object.Reader, In_Sequence);
+							Advance_Structure (Object.Reader, In_Mapping);
 						end loop;
 					end if;
 				when Writing =>
-					Enter_Sequence (Object.Writer, Name);
-					Iterate (Value, Process_Iterate'Access);
-					Leave_Sequence (Object.Writer);
+					Enter_Mapping (Object.Writer, Name);
+					declare
+						procedure Process_Iterate (Position : in Cursor) is
+						begin
+							Update_Element (Value, Position, Process_Update'Access);
+						end Process_Iterate;
+					begin
+						Iterate (Value, Process_Iterate'Access);
+					end;
+					Leave_Mapping (Object.Writer);
 			end case;
 		end IO;
 		
@@ -285,12 +250,83 @@ package body Serialization is
 			Value : in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
+				Name : in String;
 				Item : in out Element_Type)) is
 		begin
 			IO (Object, "", Value, Callback);
 		end IO;
 		
-	end IO_Set;
+	end IO_Map_2005;
+	
+	package body IO_Map_2012 is
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Name : in String;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Name : in String;
+				Item : in out Element_Type)) is
+		begin
+			case Object.Direction is
+				when Reading =>
+					if Name = Next_Name (Object.Reader).all
+						and then Next_Kind (Object.Reader) = Enter_Sequence
+					then
+						Clear (Value);
+						Advance (Object.Reader, In_Mapping);
+						while Next_Kind (Object.Reader) /= Leave_Sequence loop
+							declare
+								Position : Cursor;
+								Inserted : Boolean;
+							begin
+								Insert (
+									Value,
+									Next_Name (Object.Reader).all,
+									Default,
+									Position,
+									Inserted);
+								if not Inserted then
+									raise Constraint_Error;
+								end if;
+								Callback (
+									Object,
+									Key (Position),
+									Reference (Value'Unrestricted_Access, Position).Element.all);
+							end;
+							Advance_Structure (Object.Reader, In_Mapping);
+						end loop;
+					end if;
+				when Writing =>
+					Enter_Mapping (Object.Writer, Name);
+					declare
+						I : Cursor := First (Value);
+					begin
+						while Has_Element (I) loop
+							Callback (
+								Object,
+								Key (I),
+								Reference (Value'Unrestricted_Access, I).Element.all);
+							I := Next (I);
+						end loop;
+					end;
+					Leave_Mapping (Object.Writer);
+			end case;
+		end IO;
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Name : in String;
+				Item : in out Element_Type)) is
+		begin
+			IO (Object, "", Value, Callback);
+		end IO;
+		
+	end IO_Map_2012;
 	
 	package body IO_Array is
 		
@@ -379,5 +415,239 @@ package body Serialization is
 		end IO;
 		
 	end IO_Array;
-
+	
+	package body IO_List_2005 is
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Name : in String;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type))
+		is
+			procedure Process_Update (Item : in out Element_Type) is
+			begin
+				Callback (Object, Item);
+			end Process_Update;
+		begin
+			case Object.Direction is
+				when Reading =>
+					if Name = Next_Name (Object.Reader).all
+						and then Next_Kind (Object.Reader) = Enter_Sequence
+					then
+						Clear (Value);
+						Advance (Object.Reader, In_Sequence);
+						while Next_Kind (Object.Reader) /= Leave_Sequence loop
+							Append (Value, Default);
+							Update_Element (Value, Last (Value), Process_Update'Access);
+							Advance_Structure (Object.Reader, In_Sequence);
+						end loop;
+					end if;
+				when Writing =>
+					Enter_Sequence (Object.Writer, Name);
+					declare
+						procedure Process_Iterate (Position : in Cursor) is
+						begin
+							Update_Element (Value, Position, Process_Update'Access);
+						end Process_Iterate;
+					begin
+						Iterate (Value, Process_Iterate'Access);
+					end;
+					Leave_Sequence (Object.Writer);
+			end case;
+		end IO;
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			IO (Object, "", Value, Callback);
+		end IO;
+		
+	end IO_List_2005;
+	
+	package body IO_List_2012 is
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Name : in String;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			case Object.Direction is
+				when Reading =>
+					if Name = Next_Name (Object.Reader).all
+						and then Next_Kind (Object.Reader) = Enter_Sequence
+					then
+						Clear (Value);
+						Advance (Object.Reader, In_Sequence);
+						while Next_Kind (Object.Reader) /= Leave_Sequence loop
+							Append (Value, Default);
+							Callback (
+								Object,
+								Reference (Value'Unrestricted_Access, Last (Value)).Element.all);
+							Advance_Structure (Object.Reader, In_Sequence);
+						end loop;
+					end if;
+				when Writing =>
+					Enter_Sequence (Object.Writer, Name);
+					declare
+						I : Cursor := First (Value);
+					begin
+						while Has_Element (I) loop
+							Callback (
+								Object,
+								Reference (Value'Unrestricted_Access, I).Element.all);
+							exit when I = Last (Value); -- for array ???
+							I := Next (I);
+						end loop;
+					end;
+					Leave_Sequence (Object.Writer);
+			end case;
+		end IO;
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			IO (Object, "", Value, Callback);
+		end IO;
+		
+	end IO_List_2012;
+	
+	package body IO_Set_2005 is
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Name : in String;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			case Object.Direction is
+				when Reading =>
+					if Name = Next_Name (Object.Reader).all
+						and then Next_Kind (Object.Reader) = Enter_Sequence
+					then
+						Clear (Value);
+						Advance (Object.Reader, In_Sequence);
+						while Next_Kind (Object.Reader) /= Leave_Sequence loop
+							declare
+								Position : Cursor;
+								Inserted : Boolean;
+								New_Item : Element_Type := Default;
+							begin
+								Callback (Object, New_Item);
+								Insert (Value, New_Item, Position, Inserted);
+								if not Inserted then
+									raise Constraint_Error;
+								end if;
+							end;
+							Advance_Structure (Object.Reader, In_Sequence);
+						end loop;
+					end if;
+				when Writing =>
+					Enter_Sequence (Object.Writer, Name);
+					declare
+						procedure Process_Iterate (Position : in Cursor) is
+							procedure Process_Query (Item : in Element_Type) is
+								Mutable_Item : Element_Type := Item;
+							begin
+								Callback (Object, Mutable_Item);
+							end Process_Query;
+						begin
+							Query_Element (Position, Process_Query'Access);
+						end Process_Iterate;
+					begin
+						Iterate (Value, Process_Iterate'Access);
+					end;
+					Leave_Sequence (Object.Writer);
+			end case;
+		end IO;
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			IO (Object, "", Value, Callback);
+		end IO;
+		
+	end IO_Set_2005;
+	
+	package body IO_Set_2012 is
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Name : in String;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			case Object.Direction is
+				when Reading =>
+					if Name = Next_Name (Object.Reader).all
+						and then Next_Kind (Object.Reader) = Enter_Sequence
+					then
+						Clear (Value);
+						Advance (Object.Reader, In_Sequence);
+						while Next_Kind (Object.Reader) /= Leave_Sequence loop
+							declare
+								Position : Cursor;
+								Inserted : Boolean;
+								New_Item : Element_Type := Default;
+							begin
+								Callback (Object, New_Item);
+								Insert (Value, New_Item, Position, Inserted);
+								if not Inserted then
+									raise Constraint_Error;
+								end if;
+							end;
+							Advance_Structure (Object.Reader, In_Sequence);
+						end loop;
+					end if;
+				when Writing =>
+					Enter_Sequence (Object.Writer, Name);
+					declare
+						I : Cursor := First (Value);
+					begin
+						while Has_Element (I) loop
+							declare
+								Mutable_Item : Element_Type :=
+									Constant_Reference (Value'Unrestricted_Access, I).Element.all;
+							begin
+								Callback (Object, Mutable_Item);
+							end;
+							I := Next (I);
+						end loop;
+					end;
+					Leave_Sequence (Object.Writer);
+			end case;
+		end IO;
+		
+		procedure IO (
+			Object : not null access Serializer;
+			Value : in out Container_Type;
+			Callback : not null access procedure (
+				Object : not null access Serializer;
+				Item : in out Element_Type)) is
+		begin
+			IO (Object, "", Value, Callback);
+		end IO;
+		
+	end IO_Set_2012;
+	
 end Serialization;
