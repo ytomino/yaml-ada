@@ -2,8 +2,6 @@ with Ada.Unchecked_Conversion;
 package body YAML.Streams is
 	use type C.signed_int;
 	
-	-- local
-	
 	function Read_Handler (
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
@@ -56,7 +54,7 @@ package body YAML.Streams is
 		return 1;
 	end Write_Handler;
 	
-	-- body
+	-- implementation
 	
 	function Create (
 		Stream : not null access Ada.Streams.Root_Stream_Type'Class)

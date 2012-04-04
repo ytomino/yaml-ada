@@ -1,8 +1,6 @@
 package body Serialization is
 	use type Ada.Strings.Unbounded.Unbounded_String;
 	
-	-- local
-	
 	function Error_Message (Name, Value : String) return String is
 	begin
 		if Name = "" then
@@ -12,7 +10,7 @@ package body Serialization is
 		end if;
 	end Error_Message;
 	
-	-- body
+	-- implementation
 	
 	procedure Advance_Structure (
 		Object : not null access Reader;

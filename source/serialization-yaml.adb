@@ -3,8 +3,6 @@ package body Serialization.YAML is
 	use type Ada.Strings.Unbounded.String_Access;
 	use type Standard.YAML.Event_Type;
 	
-	-- local
-	
 	Null_String : aliased String := "";
 	
 	procedure Free is
@@ -120,7 +118,7 @@ package body Serialization.YAML is
 			Implicit_Indicator => True));
 	end Emit_Document_End;
 	
-	-- body
+	-- implementation
 	
 	overriding procedure Advance (
 		Object : not null access Reader;

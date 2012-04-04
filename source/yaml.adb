@@ -12,8 +12,6 @@ package body YAML is
 	use type C.yaml.yaml_tag_directive_t_ptr;
 	use type C.yaml.yaml_version_directive_t_ptr;
 	
-	-- local
-	
 	type yaml_tag_directive_t_array is array (C.size_t range <>) of
 		aliased C.yaml.yaml_tag_directive_t;
 	type yaml_tag_directive_t_array_access is access yaml_tag_directive_t_array;
@@ -163,7 +161,7 @@ package body YAML is
 		end if;
 	end Parse_Expection;
 	
-	-- body
+	-- implementation
 	
 	function Create (
 		Input : not null access procedure (Item : out String; Last : out Natural))
