@@ -293,7 +293,7 @@ package body Serialization is
 								Callback (
 									Object,
 									Key (Position),
-									Reference (Value'Unrestricted_Access, Position).Element.all);
+									Reference (Value, Position).Element.all);
 							end;
 							Advance_Structure (Object.Reader, In_Mapping);
 						end loop;
@@ -307,7 +307,7 @@ package body Serialization is
 							Callback (
 								Object,
 								Key (I),
-								Reference (Value'Unrestricted_Access, I).Element.all);
+								Reference (Value, I).Element.all);
 							I := Next (I);
 						end loop;
 					end;
@@ -489,9 +489,13 @@ package body Serialization is
 						Advance (Object.Reader, In_Sequence);
 						while Next_Kind (Object.Reader) /= Leave_Sequence loop
 							Append (Value, Default);
-							Callback (
-								Object,
-								Reference (Value'Unrestricted_Access, Last (Value)).Element.all);
+							declare
+								Last_Position : constant Cursor := Last (Value);
+							begin
+								Callback (
+									Object,
+									Reference (Value, Last_Position).Element.all);
+							end;
 							Advance_Structure (Object.Reader, In_Sequence);
 						end loop;
 					end if;
@@ -503,7 +507,7 @@ package body Serialization is
 						while Has_Element (I) loop
 							Callback (
 								Object,
-								Reference (Value'Unrestricted_Access, I).Element.all);
+								Reference (Value, I).Element.all);
 							exit when I = Last (Value); -- for array ???
 							I := Next (I);
 						end loop;
@@ -627,7 +631,7 @@ package body Serialization is
 						while Has_Element (I) loop
 							declare
 								Mutable_Item : Element_Type :=
-									Constant_Reference (Value'Unrestricted_Access, I).Element.all;
+									Constant_Reference (Value, I).Element.all;
 							begin
 								Callback (Object, Mutable_Item);
 							end;

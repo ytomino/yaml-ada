@@ -1,3 +1,4 @@
+pragma Ada_2012;
 with Ada.Containers;
 with Ada.Strings.Unbounded;
 package Serialization is
@@ -160,7 +161,7 @@ package Serialization is
 		with function Next (Position : Cursor) return Cursor is <>;
 		with function Key (Position : Cursor) return String is <>;
 		with function Reference (
-			Container : not null access Container_Type; -- aliased
+			Container : aliased in out Container_Type;
 			Position : Cursor)
 			return Reference_Type is <>;
 		with procedure Insert (
@@ -261,7 +262,7 @@ package Serialization is
 		with function First (Container : Container_Type) return Cursor is <>;
 		with function Next (Position : Cursor) return Cursor is <>;
 		with function Reference (
-			Container : not null access Container_Type; -- aliased in out
+			Container : aliased in out Container_Type;
 			Position : Cursor)
 			return Reference_Type is <>;
 		with procedure Append (
@@ -332,7 +333,7 @@ package Serialization is
 		with function First (Container : Container_Type) return Cursor is <>;
 		with function Next (Position : Cursor) return Cursor is <>;
 		with function Constant_Reference (
-			Container : not null access constant Container_Type; -- aliased
+			Container : aliased Container_Type;
 			Position : Cursor)
 			return Constant_Reference_Type is <>;
 		with procedure Insert (
