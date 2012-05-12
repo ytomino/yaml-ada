@@ -72,12 +72,12 @@ package body Serialization.YAML is
 		Object : not null access Reader;
 		Tag : in String)
 	is
-		procedure Process (
-			Event : in Standard.YAML.Event;
-			Start_Mark, End_Mark : in Standard.YAML.Mark)
-		is
-			pragma Unreferenced (Start_Mark);
-			pragma Unreferenced (End_Mark);
+		Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+	begin
+		Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+		declare
+			Event : Standard.YAML.Event
+				renames Standard.YAML.Value (Parsing_Entry).Element.all;
 		begin
 			if Event.Tag /= null then
 				declare
@@ -94,9 +94,7 @@ package body Serialization.YAML is
 				end;
 			end if;
 			Handle (Object, Event);
-		end Process;
-	begin
-		Standard.YAML.Parse (Object.Parser.all, Process'Access);
+		end;
 	end Advance_Start;
 	
 	procedure Emit_Name (Object : not null access Writer; Name : in String) is
@@ -122,38 +120,35 @@ package body Serialization.YAML is
 	
 	overriding procedure Advance (
 		Object : not null access Reader;
-		Position : in State)
-	is
-		procedure Process_Value (
-			Event : in Standard.YAML.Event;
-			Start_Mark, End_Mark : in Standard.YAML.Mark)
-		is
-			pragma Unreferenced (Start_Mark);
-			pragma Unreferenced (End_Mark);
-		begin
-			Handle (Object, Event);
-		end Process_Value;
-		procedure Process_Name (
-			Event : in Standard.YAML.Event;
-			Start_Mark, End_Mark : in Standard.YAML.Mark)
-		is
-			pragma Unreferenced (Start_Mark);
-			pragma Unreferenced (End_Mark);
-		begin
-			if Event.Event_Type = Standard.YAML.Scalar then
-				Object.Next_Name := new String'(Event.Value.all);
-				Standard.YAML.Parse (Object.Parser.all, Process_Value'Access);
-			else
-				Handle (Object, Event); -- complex mapping key
-			end if;
-		end Process_Name;
+		Position : in State) is
 	begin
 		Free_And_Null (Object.Next_Name);
 		if Position = In_Mapping then
-			Standard.YAML.Parse (Object.Parser.all, Process_Name'Access);
-		else
-			Standard.YAML.Parse (Object.Parser.all, Process_Value'Access);
+			declare
+				Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+			begin
+				Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+				declare
+					Event : Standard.YAML.Event
+						renames Standard.YAML.Value (Parsing_Entry).Element.all;
+				begin
+					if Event.Event_Type = Standard.YAML.Scalar then
+						Object.Next_Name := new String'(Event.Value.all);
+--						goto Process_Value;
+					else
+						Handle (Object, Event); -- complex mapping key
+						return;
+					end if;
+				end;
+			end;
 		end if;
+--	<<Process_Value>>
+		declare
+			Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+		begin
+			Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+			Handle (Object, Standard.YAML.Value (Parsing_Entry).Element.all);
+		end;
 	end Advance;
 	
 	overriding procedure Enter_Mapping (

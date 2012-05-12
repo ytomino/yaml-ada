@@ -1,3 +1,4 @@
+pragma Ada_2012;
 with Ada.IO_Exceptions;
 private with C.yaml;
 private with Ada.Finalization;
@@ -75,7 +76,7 @@ package YAML is
 	end Event_Types;
 	type Event_Type is new Event_Types.Event_Type;
 	
-	type Event (Event_Type : YAML.Event_Type) is record
+	type Event (Event_Type : YAML.Event_Type := No_Event) is record
 		case Event_Type is
 			when Stream_Start =>
 				Encoding : YAML.Encoding;
@@ -152,6 +153,30 @@ package YAML is
 	procedure Parse_Document_Start (Object : in out Parser);
 	procedure Parse_Document_End (Object : in out Parser);
 	
+	type Parsing_Entry_Type is limited private;
+	pragma Preelaborable_Initialization (Parsing_Entry_Type);
+	
+	type Event_Reference_Type (Element : not null access constant Event) is
+		null record
+		with Implicit_Dereference => Element;
+	type Mark_Reference_Type (Element : not null access constant Mark) is
+		null record
+		with Implicit_Dereference => Element;
+	
+	function Value (Parsing_Entry : Parsing_Entry_Type)
+		return Event_Reference_Type;
+	pragma Inline (Value);
+	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
+		return Mark_Reference_Type;
+	pragma Inline (Start_Mark);
+	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
+		return Mark_Reference_Type;
+	pragma Inline (End_Mark);
+	
+	procedure Parse (
+		Object : in out Parser;
+		Parsing_Entry : out Parsing_Entry_Type);
+	
 	type Emitter (<>) is limited private;
 	
 	function Create (
@@ -215,6 +240,30 @@ private
 			C.yaml.YAML_BLOCK_MAPPING_STYLE),
 		Flow => C.yaml.yaml_mapping_style_t'Enum_Rep (
 			C.yaml.YAML_FLOW_MAPPING_STYLE));
+	
+	type String_Constraint is record
+		First : Positive;
+		Last : Natural;
+	end record;
+	pragma Suppress_Initialization (String_Constraint);
+	
+	type Parsed_Data_Type is limited record
+		Event : aliased YAML.Event;
+		Start_Mark, End_Mark : aliased Mark;
+		Version_Directive : aliased YAML.Version_Directive;
+		Anchor_Constraint : aliased String_Constraint;
+		Tag_Constraint : aliased String_Constraint;
+		Value_Constraint : aliased String_Constraint;
+		yaml_event : aliased C.yaml.yaml_event_t;
+		Delete : access procedure (Parsed_Data : in out Parsed_Data_Type);
+	end record;
+	pragma Suppress_Initialization (Parsed_Data_Type);
+	
+	type Parsing_Entry_Type is new Ada.Finalization.Limited_Controlled with record
+		Data : aliased Parsed_Data_Type;
+	end record;
+	
+	overriding procedure Finalize (Object : in out Parsing_Entry_Type);
 	
 	package Parsers is
 		

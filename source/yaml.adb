@@ -90,7 +90,28 @@ package body YAML is
 		end if;
 	end New_String;
 	
-	type Version_Directive_Access is access all YAML.Version_Directive;
+	-- dirty trick
+	function Copy_String_Access (
+		S : not null String_Access;
+		Constraint : not null access String_Constraint)
+		return String_Access
+	is
+		type Fat_Type is record
+			Data : System.Address;
+			Constraints : System.Address;
+		end record;
+		Fat : Fat_Type;
+		Result : String_Access;
+		for Fat'Address use Result'Address;
+	begin
+		Fat.Data := S.all'Address;
+		Fat.Constraints := Constraint.all'Address;
+		Constraint.First := S'First;
+		Constraint.Last := S'Last;
+		return Result;
+	end Copy_String_Access;
+	
+	type Version_Directive_Access is access all Version_Directive;
 	
 	type Tag_Directive_Array_Access is access Tag_Directive_Array;
 	procedure Free is new Ada.Unchecked_Deallocation (
@@ -162,6 +183,257 @@ package body YAML is
 			raise Status_Error;
 		end if;
 	end Parse_Expection;
+	
+	-- parsing one event
+	
+	type Tag_Directive_Array_Constant_Access is
+		access constant Tag_Directive_Array;
+	function Remove_Constant is new Ada.Unchecked_Conversion (
+		Tag_Directive_Array_Constant_Access,
+		Tag_Directive_Array_Access);
+	
+	type String_Constant_Access is access constant String;
+	function Remove_Constant is new Ada.Unchecked_Conversion (
+		String_Constant_Access,
+		String_Access);
+	
+	procedure Delete_Event (Parsed_Data : in out Parsed_Data_Type) is
+	begin
+		C.yaml.yaml_event_delete (Parsed_Data.yaml_event'Access);
+	end Delete_Event;
+	
+	procedure Delete_Document_Start_Event (
+		Parsed_Data : in out Parsed_Data_Type) is
+	begin
+		declare
+			Tag_Directives : Tag_Directive_Array_Access := Remove_Constant (
+				Tag_Directive_Array_Constant_Access (Parsed_Data.Event.Tag_Directives));
+		begin
+			if Tag_Directives /= null then
+				for I in Tag_Directives'Range loop
+					declare
+						S : String_Access;
+					begin
+						S := Remove_Constant (
+							String_Constant_Access (Tag_Directives (I).Prefix));
+						Free (S);
+						S := Remove_Constant (
+							String_Constant_Access (Tag_Directives (I).Handle));
+						Free (S);
+					end;
+				end loop;
+				Free (Tag_Directives);
+			end if;
+		end;
+		C.yaml.yaml_event_delete (Parsed_Data.yaml_event'Access);
+	end Delete_Document_Start_Event;
+	
+	procedure Parse (
+		Object : in out Parser;
+		Parsed_Data : out Parsed_Data_Type)
+	is
+		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
+		Ev : C.yaml.yaml_event_t renames Parsed_Data.yaml_event;
+	begin
+		if C.yaml.yaml_parser_parse (Pa, Ev'Access) = 0 then
+			Raise_Error (Pa.error, Pa.problem, Pa.mark'Access);
+		end if;
+		Parsed_Data.Start_Mark.Index := Integer (Ev.start_mark.index);
+		Parsed_Data.Start_Mark.Line := Integer (Ev.start_mark.line);
+		Parsed_Data.Start_Mark.Column := Integer (Ev.start_mark.column);
+		Parsed_Data.End_Mark.Index := Integer (Ev.end_mark.index);
+		Parsed_Data.End_Mark.Line := Integer (Ev.end_mark.line);
+		Parsed_Data.End_Mark.Column := Integer (Ev.end_mark.column);
+		case Ev.F_type is
+			when C.yaml.YAML_NO_EVENT =>
+				Parsed_Data.Event := Event'(Event_Type => No_Event);
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_STREAM_START_EVENT =>
+				Parsed_Data.Event := Event'(
+					Event_Type => Stream_Start,
+					Encoding => Encoding'Enum_Val (C.yaml.yaml_encoding_t'Enum_Rep (
+						Ev.data.stream_start.encoding)));
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_STREAM_END_EVENT =>
+				Parsed_Data.Event := Event'(Event_Type => Stream_End);
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_DOCUMENT_START_EVENT =>
+				declare
+					Version_Directive : Version_Directive_Access;
+					Tag_Directives : Tag_Directive_Array_Access;
+				begin
+					if Ev.data.document_start.version_directive = null then
+						Version_Directive := null;
+					else
+						Version_Directive := Parsed_Data.Version_Directive'Unchecked_Access;
+						Version_Directive.Major := Integer (
+							Ev.data.document_start.version_directive.major);
+						Version_Directive.Minor := Integer (
+							Ev.data.document_start.version_directive.minor);
+					end if;
+					if Ev.data.document_start.tag_directives.start /= null then
+						declare
+							function Cast is new Ada.Unchecked_Conversion (
+								C.yaml.yaml_tag_directive_t_ptr,
+								C.ptrdiff_t);
+							function Cast is new Ada.Unchecked_Conversion (
+								C.ptrdiff_t,
+								C.yaml.yaml_tag_directive_t_ptr);
+							sizeof_yaml_tag_directive_t : constant C.ptrdiff_t :=
+								C.yaml.yaml_tag_directive_t'Size / Standard'Storage_Unit;
+							Length : constant Natural := Natural (
+								(Cast (Ev.data.document_start.tag_directives.F_end)
+									- Cast (Ev.data.document_start.tag_directives.start))
+								/ sizeof_yaml_tag_directive_t);
+							P : C.yaml.yaml_tag_directive_t_ptr;
+						begin
+							Tag_Directives := new Tag_Directive_Array (1 .. Length);
+							P := Ev.data.document_start.tag_directives.start;
+							for I in 1 .. Length loop
+								Tag_Directives (I).Handle := New_String (P.handle);
+								Tag_Directives (I).Prefix := New_String (P.prefix);
+								P := Cast (Cast (P) + sizeof_yaml_tag_directive_t);
+							end loop;
+						end;
+					end if;
+					Parsed_Data.Event := Event'(
+						Event_Type => Document_Start,
+						Version_Directive => Version_Directive,
+						Tag_Directives => Tag_Directives,
+						Implicit_Indicator => Ev.data.document_start.implicit /= 0);
+				end;
+				Parsed_Data.Delete := Delete_Document_Start_Event'Access;
+			when C.yaml.YAML_DOCUMENT_END_EVENT =>
+				Parsed_Data.Event := Event'(
+					Event_Type => Document_End,
+					Implicit_Indicator => Ev.data.document_end.implicit /= 0);
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_ALIAS_EVENT =>
+				declare
+					-- anchor
+					Anchor_S : String (
+						1 ..
+						Length (To_char_const_ptr (Ev.data.alias.anchor)));
+					for Anchor_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.alias.anchor));
+					Anchor_A : constant String_Access := Copy_String_Access (
+						Anchor_S'Unrestricted_Access,
+						Parsed_Data.Anchor_Constraint'Access);
+				begin
+					Parsed_Data.Event := Event'(
+						Event_Type => Alias,
+						Anchor => Anchor_A);
+				end;
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_SCALAR_EVENT =>
+				declare
+					-- anchor
+					Anchor_S : String (
+						1 ..
+						Length (To_char_const_ptr (Ev.data.scalar.anchor)));
+					for Anchor_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.scalar.anchor));
+					Anchor_A : constant String_Access := Copy_String_Access (
+						Anchor_S'Unrestricted_Access,
+						Parsed_Data.Anchor_Constraint'Access);
+					-- tag
+					Tag_S : String (
+						1 ..
+						Length (To_char_const_ptr (Ev.data.scalar.tag)));
+					for Tag_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.scalar.tag));
+					Tag_A : constant String_Access := Copy_String_Access (
+						Tag_S'Unrestricted_Access,
+						Parsed_Data.Tag_Constraint'Access);
+					-- value
+					Value_S : String (
+						1 ..
+						Natural (Ev.data.scalar.length));
+					for Value_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.scalar.value));
+					Value_A : constant String_Access := Copy_String_Access (
+						Value_S'Unrestricted_Access,
+						Parsed_Data.Value_Constraint'Access);
+				begin
+					Parsed_Data.Event := Event'(
+						Event_Type => Scalar,
+						Anchor => Anchor_A,
+						Tag => Tag_A,
+						Value => Value_A,
+						Plain_Implicit_Tag => Ev.data.scalar.plain_implicit /= 0,
+						Quoted_Implicit_Tag => Ev.data.scalar.quoted_implicit /= 0,
+						Scalar_Style => Scalar_Style'Enum_Val (
+							C.yaml.yaml_scalar_style_t'Enum_Rep (Ev.data.scalar.style)));
+				end;
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_SEQUENCE_START_EVENT =>
+				declare
+					-- anchor
+					Anchor_S : String (
+						1 ..
+						Length (To_char_const_ptr (Ev.data.sequence_start.anchor)));
+					for Anchor_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.sequence_start.anchor));
+					Anchor_A : constant String_Access := Copy_String_Access (
+						Anchor_S'Unrestricted_Access,
+						Parsed_Data.Anchor_Constraint'Access);
+					-- tag
+					Tag_S : String (
+						1 ..
+						Length (To_char_const_ptr (Ev.data.sequence_start.tag)));
+					for Tag_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.sequence_start.tag));
+					Tag_A : constant String_Access := Copy_String_Access (
+						Tag_S'Unrestricted_Access,
+						Parsed_Data.Tag_Constraint'Access);
+				begin
+					Parsed_Data.Event := Event'(
+						Event_Type => Sequence_Start,
+						Anchor => Anchor_A,
+						Tag => Tag_A,
+						Implicit_Tag => Ev.data.sequence_start.implicit /= 0,
+						Sequence_Style => Sequence_Style'Enum_Val (
+							C.yaml.yaml_sequence_style_t'Enum_Rep (Ev.data.sequence_start.style)));
+				end;
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_SEQUENCE_END_EVENT =>
+				Parsed_Data.Event := Event'(Event_Type => Sequence_End);
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_MAPPING_START_EVENT =>
+				declare
+					-- anchor
+					Anchor_S : String (
+						1 ..
+						Length (To_char_const_ptr (Ev.data.mapping_start.anchor)));
+					for Anchor_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.mapping_start.anchor));
+					Anchor_A : constant String_Access := Copy_String_Access (
+						Anchor_S'Unrestricted_Access,
+						Parsed_Data.Anchor_Constraint'Access);
+					-- tag
+					Tag_S : String (
+						1 ..
+						Length (To_char_const_ptr (Ev.data.mapping_start.tag)));
+					for Tag_S'Address
+						use To_Address (To_char_const_ptr (Ev.data.mapping_start.tag));
+					Tag_A : constant String_Access := Copy_String_Access (
+						Tag_S'Unrestricted_Access,
+						Parsed_Data.Tag_Constraint'Access);
+				begin
+					Parsed_Data.Event := Event'(
+						Event_Type => Mapping_Start,
+						Anchor => Anchor_A,
+						Tag => Tag_A,
+						Implicit_Tag => Ev.data.mapping_start.implicit /= 0,
+						Mapping_Style => Mapping_Style'Enum_Val (
+							C.yaml.yaml_mapping_style_t'Enum_Rep (Ev.data.mapping_start.style)));
+				end;
+				Parsed_Data.Delete := Delete_Event'Access;
+			when C.yaml.YAML_MAPPING_END_EVENT =>
+				Parsed_Data.Event := Event'(Event_Type => Mapping_End);
+				Parsed_Data.Delete := Delete_Event'Access;
+		end case;
+	end Parse;
 	
 	-- implementation
 	
@@ -397,6 +669,19 @@ package body YAML is
 		end if;
 	end Emit;
 	
+	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
+		return Mark_Reference_Type is
+	begin
+		return (Element => Parsing_Entry.Data.End_Mark'Access);
+	end End_Mark;
+	
+	overriding procedure Finalize (Object : in out Parsing_Entry_Type) is
+	begin
+		if Object.Data.Delete /= null then
+			Object.Data.Delete (Object.Data);
+		end if;
+	end Finalize;
+	
 	procedure Flush (Object : in out Emitter) is
 		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
@@ -411,204 +696,18 @@ package body YAML is
 			Event : in YAML.Event;
 			Start_Mark, End_Mark : in Mark))
 	is
-		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
-		Ev : aliased C.yaml.yaml_event_t;
-		Start_Mark, End_Mark : Mark;
+		Parsed_Data : Parsed_Data_Type;
 	begin
-		if C.yaml.yaml_parser_parse (Pa, Ev'Access) = 0 then
-			Raise_Error (Pa.error, Pa.problem, Pa.mark'Access);
-		end if;
-		Start_Mark.Index := Integer (Ev.start_mark.index);
-		Start_Mark.Line := Integer (Ev.start_mark.line);
-		Start_Mark.Column := Integer (Ev.start_mark.column);
-		End_Mark.Index := Integer (Ev.end_mark.index);
-		End_Mark.Line := Integer (Ev.end_mark.line);
-		End_Mark.Column := Integer (Ev.end_mark.column);
-		case Ev.F_type is
-			when C.yaml.YAML_NO_EVENT =>
-				Process (
-					Event'(
-						Event_Type => No_Event),
-					Start_Mark,
-					End_Mark);
-			when C.yaml.YAML_STREAM_START_EVENT =>
-				Process (
-					Event'(
-						Event_Type => Stream_Start,
-						Encoding => Encoding'Enum_Val (C.yaml.yaml_encoding_t'Enum_Rep (
-							Ev.data.stream_start.encoding))),
-					Start_Mark,
-					End_Mark);
-			when C.yaml.YAML_STREAM_END_EVENT =>
-				Process (
-					Event'(
-						Event_Type => Stream_End),
-					Start_Mark,
-					End_Mark);
-			when C.yaml.YAML_DOCUMENT_START_EVENT =>
-				declare
-					Version_Directive : Version_Directive_Access;
-					VD_Body : aliased YAML.Version_Directive;
-					Tag_Directives : Tag_Directive_Array_Access;
-				begin
-					if Ev.data.document_start.version_directive = null then
-						Version_Directive := null;
-					else
-						VD_Body.Major := Integer (
-							Ev.data.document_start.version_directive.major);
-						VD_Body.Minor := Integer (
-							Ev.data.document_start.version_directive.minor);
-						Version_Directive := VD_Body'Unchecked_Access;
-					end if;
-					if Ev.data.document_start.tag_directives.start /= null then
-						declare
-							function Cast is new Ada.Unchecked_Conversion (
-								C.yaml.yaml_tag_directive_t_ptr,
-								C.ptrdiff_t);
-							function Cast is new Ada.Unchecked_Conversion (
-								C.ptrdiff_t,
-								C.yaml.yaml_tag_directive_t_ptr);
-							sizeof_yaml_tag_directive_t : constant C.ptrdiff_t :=
-								C.yaml.yaml_tag_directive_t'Size / Standard'Storage_Unit;
-							Length : constant Natural := Natural (
-								(Cast (Ev.data.document_start.tag_directives.F_end)
-									- Cast (Ev.data.document_start.tag_directives.start))
-								/ sizeof_yaml_tag_directive_t);
-							P : C.yaml.yaml_tag_directive_t_ptr;
-						begin
-							Tag_Directives := new Tag_Directive_Array (1 .. Length);
-							P := Ev.data.document_start.tag_directives.start;
-							for I in 1 .. Length loop
-								Tag_Directives (I).Handle := New_String (P.handle);
-								Tag_Directives (I).Prefix := New_String (P.prefix);
-								P := Cast (Cast (P) + sizeof_yaml_tag_directive_t);
-							end loop;
-						end;
-					end if;
-					Process (
-						Event'(
-							Event_Type => Document_Start,
-							Version_Directive => Version_Directive,
-							Tag_Directives => Tag_Directives,
-							Implicit_Indicator => Ev.data.document_start.implicit /= 0),
-						Start_Mark,
-						End_Mark);
-					if Tag_Directives /= null then
-						for I in Tag_Directives'Range loop
-							declare
-								type SCA is access constant String;
-								function Cast is new Ada.Unchecked_Conversion (
-									SCA,
-									String_Access);
-								S : String_Access;
-							begin
-								S := Cast (SCA (Tag_Directives (I).Prefix));
-								Free (S);
-								S := Cast (SCA (Tag_Directives (I).Handle));
-								Free (S);
-							end;
-						end loop;
-						Free (Tag_Directives);
-					end if;
-				end;
-			when C.yaml.YAML_DOCUMENT_END_EVENT =>
-				Process (
-					Event'(
-						Event_Type => Document_End,
-						Implicit_Indicator => Ev.data.document_end.implicit /= 0),
-					Start_Mark,
-					End_Mark);
-			when C.yaml.YAML_ALIAS_EVENT =>
-				declare
-					Anchor : String_Access;
-				begin
-					Anchor := New_String (Ev.data.alias.anchor);
-					Process (
-						Event'(
-							Event_Type => Alias,
-							Anchor => Anchor),
-						Start_Mark,
-						End_Mark);
-					Free (Anchor);
-				end;
-			when C.yaml.YAML_SCALAR_EVENT =>
-				declare
-					Anchor : String_Access;
-					Tag : String_Access;
-					Value : String (1 .. Natural (Ev.data.scalar.length));
-					for Value'Address use Ev.data.scalar.value.all'Address;
-				begin
-					Anchor := New_String (Ev.data.scalar.anchor);
-					Tag := New_String (Ev.data.scalar.tag);
-					Process (
-						Event'(
-							Event_Type => Scalar,
-							Anchor => Anchor,
-							Tag => Tag,
-							Value => Value'Unrestricted_Access,
-							Plain_Implicit_Tag => Ev.data.scalar.plain_implicit /= 0,
-							Quoted_Implicit_Tag => Ev.data.scalar.quoted_implicit /= 0,
-							Scalar_Style => Scalar_Style'Enum_Val (
-								C.yaml.yaml_scalar_style_t'Enum_Rep (Ev.data.scalar.style))),
-						Start_Mark,
-						End_Mark);
-					Free (Anchor);
-					Free (Tag);
-				end;
-			when C.yaml.YAML_SEQUENCE_START_EVENT =>
-				declare
-					Anchor : String_Access;
-					Tag : String_Access;
-				begin
-					Anchor := New_String (Ev.data.sequence_start.anchor);
-					Tag := New_String (Ev.data.sequence_start.tag);
-					Process (
-						Event'(
-							Event_Type => Sequence_Start,
-							Anchor => Anchor,
-							Tag => Tag,
-							Implicit_Tag => Ev.data.sequence_start.implicit /= 0,
-							Sequence_Style => Sequence_Style'Enum_Val (
-								C.yaml.yaml_sequence_style_t'Enum_Rep (Ev.data.sequence_start.style))),
-						Start_Mark,
-						End_Mark);
-					Free (Anchor);
-					Free (Tag);
-				end;
-			when C.yaml.YAML_SEQUENCE_END_EVENT =>
-				Process (
-					Event'(
-						Event_Type => Sequence_End),
-					Start_Mark,
-					End_Mark);
-			when C.yaml.YAML_MAPPING_START_EVENT =>
-				declare
-					Anchor : String_Access;
-					Tag : String_Access;
-				begin
-					Anchor := New_String (Ev.data.mapping_start.anchor);
-					Tag := New_String (Ev.data.mapping_start.tag);
-					Process (
-						Event'(
-							Event_Type => Mapping_Start,
-							Anchor => Anchor,
-							Tag => Tag,
-							Implicit_Tag => Ev.data.mapping_start.implicit /= 0,
-							Mapping_Style => Mapping_Style'Enum_Val (
-								C.yaml.yaml_mapping_style_t'Enum_Rep (Ev.data.mapping_start.style))),
-						Start_Mark,
-						End_Mark);
-					Free (Anchor);
-					Free (Tag);
-				end;
-			when C.yaml.YAML_MAPPING_END_EVENT =>
-				Process (
-					Event'(
-						Event_Type => Mapping_End),
-					Start_Mark,
-					End_Mark);
-		end case;
-		C.yaml.yaml_event_delete (Ev'Access);
+		Parse (Object, Parsed_Data);
+		Process (Parsed_Data.Event, Parsed_Data.Start_Mark, Parsed_Data.End_Mark);
+		Parsed_Data.Delete (Parsed_Data);
+	end Parse;
+	
+	procedure Parse (
+		Object : in out Parser;
+		Parsing_Entry : out Parsing_Entry_Type) is
+	begin
+		Parse (Object, Parsing_Entry.Data);
 	end Parse;
 	
 	procedure Parse_Document_Start (Object : in out Parser) is
@@ -735,6 +834,18 @@ package body YAML is
 			Em,
 			C.signed_int (Width));
 	end Set_Width;
+	
+	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
+		return Mark_Reference_Type is
+	begin
+		return (Element => Parsing_Entry.Data.Start_Mark'Access);
+	end Start_Mark;
+	
+	function Value (Parsing_Entry : Parsing_Entry_Type)
+		return Event_Reference_Type is
+	begin
+		return (Element => Parsing_Entry.Data.Event'Access);
+	end Value;
 	
 	function Version return String is
 		P : constant C.char_const_ptr := C.yaml.yaml_get_version_string;
