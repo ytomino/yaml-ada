@@ -148,11 +148,12 @@ package body YAML is
 		Object : in out Parser;
 		Expected : C.yaml.yaml_event_type_t)
 	is
+		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
 		Ev : aliased C.yaml.yaml_event_t;
 		T : C.yaml.yaml_event_type_t;
 	begin
-		if C.yaml.yaml_parser_parse (Object.Raw'Access, Ev'Access) = 0 then
-			Raise_Error (Object.Raw.error, Object.Raw.problem, Object.Raw.mark'Access);
+		if C.yaml.yaml_parser_parse (Pa, Ev'Access) = 0 then
+			Raise_Error (Pa.error, Pa.problem, Pa.mark'Access);
 		end if;
 		T := Ev.F_type;
 		C.yaml.yaml_event_delete (Ev'Access);
@@ -168,13 +169,18 @@ package body YAML is
 		return Parser is
 	begin
 		return Result : Parser do
-			if C.yaml.yaml_parser_initialize (Result.Raw'Access) = 0 then
-				Raise_Error (Result.Raw.error, Result.Raw.problem, null);
-			end if;
-			C.yaml.yaml_parser_set_input (
-				Result.Raw'Access,
-				Read_Handler'Access,
-				C.void_ptr (Input.all'Address));
+			pragma Unmodified (Result);
+			declare
+				Pa : constant not null access C.yaml.yaml_parser_t := Raw (Result);
+			begin
+				if C.yaml.yaml_parser_initialize (Pa) = 0 then
+					Raise_Error (Pa.error, Pa.problem, null);
+				end if;
+				C.yaml.yaml_parser_set_input (
+					Pa,
+					Read_Handler'Access,
+					C.void_ptr (Input.all'Address));
+			end;
 		end return;
 	end Create;
 	
@@ -183,17 +189,23 @@ package body YAML is
 		return Emitter is
 	begin
 		return Result : Emitter do
-			if C.yaml.yaml_emitter_initialize (Result.Raw'Access) = 0 then
-				Raise_Error (Result.Raw.error, Result.Raw.problem, null);
-			end if;
-			C.yaml.yaml_emitter_set_output (
-				Result.Raw'Access,
-				Write_Handler'Access,
-				C.void_ptr (Output.all'Address));
+			pragma Unmodified (Result);
+			declare
+				Em : constant not null access C.yaml.yaml_emitter_t := Raw (Result);
+			begin
+				if C.yaml.yaml_emitter_initialize (Em) = 0 then
+					Raise_Error (Em.error, Em.problem, null);
+				end if;
+				C.yaml.yaml_emitter_set_output (
+					Em,
+					Write_Handler'Access,
+					C.void_ptr (Output.all'Address));
+			end;
 		end return;
 	end Create;
 	
 	procedure Emit (Object : in out Emitter; Event : in YAML.Event) is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 		Ev : aliased C.yaml.yaml_event_t;
 	begin
 		case Event.Event_Type is
@@ -379,25 +391,16 @@ package body YAML is
 					raise Storage_Error; -- maybe ...
 				end if;
 		end case;
-		if C.yaml.yaml_emitter_emit (Object.Raw'Access, Ev'Access) = 0 then
-			Raise_Error (Object.Raw.error, Object.Raw.problem, null);
+		if C.yaml.yaml_emitter_emit (Em, Ev'Access) = 0 then
+			Raise_Error (Em.error, Em.problem, null);
 		end if;
 	end Emit;
 	
-	overriding procedure Finalize (Object : in out Parser) is
-	begin
-		C.yaml.yaml_parser_delete (Object.Raw'Access);
-	end Finalize;
-	
-	overriding procedure Finalize (Object : in out Emitter) is
-	begin
-		C.yaml.yaml_emitter_delete (Object.Raw'Access);
-	end Finalize;
-	
 	procedure Flush (Object : in out Emitter) is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
-		if C.yaml.yaml_emitter_flush (Object.Raw'Access) = 0 then
-			Raise_Error (Object.Raw.error, Object.Raw.problem, null);
+		if C.yaml.yaml_emitter_flush (Em) = 0 then
+			Raise_Error (Em.error, Em.problem, null);
 		end if;
 	end Flush;
 	
@@ -407,11 +410,12 @@ package body YAML is
 			Event : in YAML.Event;
 			Start_Mark, End_Mark : in Mark))
 	is
+		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
 		Ev : aliased C.yaml.yaml_event_t;
 		Start_Mark, End_Mark : Mark;
 	begin
-		if C.yaml.yaml_parser_parse (Object.Raw'Access, Ev'Access) = 0 then
-			Raise_Error (Object.Raw.error, Object.Raw.problem, Object.Raw.mark'Access);
+		if C.yaml.yaml_parser_parse (Pa, Ev'Access) = 0 then
+			Raise_Error (Pa.error, Pa.problem, Pa.mark'Access);
 		end if;
 		Start_Mark.Index := Integer (Ev.start_mark.index);
 		Start_Mark.Line := Integer (Ev.start_mark.line);
@@ -654,64 +658,78 @@ package body YAML is
 	
 	procedure Set_Break (
 		Object : in out Emitter;
-		Break : in Line_Break) is
+		Break : in Line_Break)
+	is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
 		C.yaml.yaml_emitter_set_break (
-			Object.Raw'Access,
+			Em,
 			C.yaml.yaml_break_t'Enum_Val (Line_Break'Enum_Rep (Break)));
 	end Set_Break;
 	
 	procedure Set_Canonical (
 		Object : in out Emitter;
-		Canonical : in Boolean) is
+		Canonical : in Boolean)
+	is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
 		C.yaml.yaml_emitter_set_canonical (
-			Object.Raw'Access,
+			Em,
 			Boolean'Pos (Canonical));
 	end Set_Canonical;
 	
 	procedure Set_Encoding (
 		Object : in out Parser;
-		Encoding : in YAML.Encoding) is
+		Encoding : in YAML.Encoding)
+	is
+		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
 	begin
 		C.yaml.yaml_parser_set_encoding (
-			Object.Raw'Access,
+			Pa,
 			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
 	end Set_Encoding;
 	
 	procedure Set_Encoding (
 		Object : in out Emitter;
-		Encoding : in YAML.Encoding) is
+		Encoding : in YAML.Encoding)
+	is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
 		C.yaml.yaml_emitter_set_encoding (
-			Object.Raw'Access,
+			Em,
 			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
 	end Set_Encoding;
 	
 	procedure Set_Indent (
 		Object : in out Emitter;
-		Indent : in Indent_Width) is
+		Indent : in Indent_Width)
+	is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
 		C.yaml.yaml_emitter_set_indent (
-			Object.Raw'Access,
+			Em,
 			C.signed_int (Indent));
 	end Set_Indent;
 	
 	procedure Set_Unicode (
 		Object : in out Emitter;
-		Unicode : in Boolean) is
+		Unicode : in Boolean)
+	is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
 		C.yaml.yaml_emitter_set_unicode (
-			Object.Raw'Access,
+			Em,
 			Boolean'Pos (Unicode));
 	end Set_Unicode;
 	
 	procedure Set_Width (
 		Object : in out Emitter;
-		Width : in Line_Width) is
+		Width : in Line_Width)
+	is
+		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
 	begin
 		C.yaml.yaml_emitter_set_width (
-			Object.Raw'Access,
+			Em,
 			C.signed_int (Width));
 	end Set_Width;
 	
@@ -719,5 +737,33 @@ package body YAML is
 	begin
 		return To_String (C.yaml.yaml_get_version_string);
 	end Version;
+	
+	package body Parsers is
+		
+		function Raw (X : Parser) return not null access C.yaml.yaml_parser_t is
+		begin
+			return X.Raw'Unrestricted_Access;
+		end Raw;
+		
+		overriding procedure Finalize (Object : in out Parser) is
+		begin
+			C.yaml.yaml_parser_delete (Object.Raw'Access);
+		end Finalize;
+		
+	end Parsers;
+	
+	package body Emitters is
+		
+		function Raw (X : Emitter) return not null access C.yaml.yaml_emitter_t is
+		begin
+			return X.Raw'Unrestricted_Access;
+		end Raw;
+		
+		overriding procedure Finalize (Object : in out Emitter) is
+		begin
+			C.yaml.yaml_emitter_delete (Object.Raw'Access);
+		end Finalize;
+		
+	end Emitters;
 	
 end YAML;

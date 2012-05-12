@@ -216,17 +216,43 @@ private
 		Flow => C.yaml.yaml_mapping_style_t'Enum_Rep (
 			C.yaml.YAML_FLOW_MAPPING_STYLE));
 	
-	type Parser is limited new Ada.Finalization.Limited_Controlled with record
-		Raw : aliased C.yaml.yaml_parser_t;
-	end record;
+	package Parsers is
+		
+		type Parser is limited private;
+		
+		function Raw (X : Parser) return not null access C.yaml.yaml_parser_t;
+		pragma Inline (Raw);
+		
+	private
+		
+		type Parser is limited new Ada.Finalization.Limited_Controlled with record
+			Raw : aliased C.yaml.yaml_parser_t;
+		end record;
+		
+		overriding procedure Finalize (Object : in out Parser);
+		
+	end Parsers;
 	
-	overriding procedure Finalize (Object : in out Parser);
+	type Parser is new Parsers.Parser;
 	
-	type Emitter is limited new Ada.Finalization.Limited_Controlled with record
-		Raw : aliased C.yaml.yaml_emitter_t;
-	end record;
+	package Emitters is
+		
+		type Emitter is limited private;
+		
+		function Raw (X : Emitter) return not null access C.yaml.yaml_emitter_t;
+		pragma Inline (Raw);
+		
+	private
+		
+		type Emitter is limited new Ada.Finalization.Limited_Controlled with record
+			Raw : aliased C.yaml.yaml_emitter_t;
+		end record;
+		
+		overriding procedure Finalize (Object : in out Emitter);
+		
+	end Emitters;
 	
-	overriding procedure Finalize (Object : in out Emitter);
+	type Emitter is new Emitters.Emitter;
 	
 	procedure Raise_Error (
 		Error : in C.yaml.yaml_error_type_t;

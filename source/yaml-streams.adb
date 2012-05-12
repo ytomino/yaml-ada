@@ -61,13 +61,18 @@ package body YAML.Streams is
 		return Parser is
 	begin
 		return Result : Parser do
-			if C.yaml.yaml_parser_initialize (Result.Raw'Access) = 0 then
-				Raise_Error (Result.Raw.error, Result.Raw.problem, null);
-			end if;
-			C.yaml.yaml_parser_set_input (
-				Result.Raw'Access,
-				Read_Handler'Access,
-				C.void_ptr (Stream.all'Address));
+			pragma Unmodified (Result);
+			declare
+				Pa : constant not null access C.yaml.yaml_parser_t := Raw (Result);
+			begin
+				if C.yaml.yaml_parser_initialize (Pa) = 0 then
+					Raise_Error (Pa.error, Pa.problem, null);
+				end if;
+				C.yaml.yaml_parser_set_input (
+					Pa,
+					Read_Handler'Access,
+					C.void_ptr (Stream.all'Address));
+			end;
 		end return;
 	end Create;
 	
@@ -76,13 +81,18 @@ package body YAML.Streams is
 		return Emitter is
 	begin
 		return Result : Emitter do
-			if C.yaml.yaml_emitter_initialize (Result.Raw'Access) = 0 then
-				Raise_Error (Result.Raw.error, Result.Raw.problem, null);
-			end if;
-			C.yaml.yaml_emitter_set_output (
-				Result.Raw'Access,
-				Write_Handler'Access,
-				C.void_ptr (Stream.all'Address));
+			pragma Unmodified (Result);
+			declare
+				Em : constant not null access C.yaml.yaml_emitter_t := Raw (Result);
+			begin
+				if C.yaml.yaml_emitter_initialize (Em) = 0 then
+					Raise_Error (Em.error, Em.problem, null);
+				end if;
+				C.yaml.yaml_emitter_set_output (
+					Em,
+					Write_Handler'Access,
+					C.void_ptr (Stream.all'Address));
+			end;
 		end return;
 	end Create;
 	
