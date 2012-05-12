@@ -52,19 +52,22 @@ package body YAML is
 		String,
 		String_Access);
 	
-	function To_String (S : access constant C.char) return String is
+	function To_char_const_ptr is new Ada.Unchecked_Conversion (
+		C.yaml.yaml_char_t_ptr,
+		C.char_const_ptr);
+	
+	function To_Address is new Ada.Unchecked_Conversion (
+		C.char_const_ptr,
+		System.Address);
+	
+	function Length (S : access constant C.char) return Natural is
 	begin
 		if S = null then
-			return "";
+			return 0;
 		else
-			declare
-				Result : String (1 .. Natural (C.string.strlen (S)));
-				for Result'Address use S.all'Address;
-			begin
-				return Result;
-			end;
+			return Natural (C.string.strlen (S));
 		end if;
-	end To_String;
+	end Length;
 	
 	function New_String (S : C.yaml.yaml_char_t_ptr) return String_Access is
 	begin
@@ -72,10 +75,8 @@ package body YAML is
 			return null;
 		else
 			declare
-				function Cast is new Ada.Unchecked_Conversion (
-					C.yaml.yaml_char_t_ptr,
-					C.char_ptr);
-				Length : constant Natural := Natural (C.string.strlen (Cast (S)));
+				Length : constant Natural :=
+					Natural (C.string.strlen (To_char_const_ptr (S)));
 				Dummy : C.void_ptr;
 				pragma Unreferenced (Dummy);
 			begin
@@ -643,7 +644,9 @@ package body YAML is
 				return "line" & C.size_t'Image (Mark.line) & ": ";
 			end if;
 		end Image;
-		Message : constant String := Image (Mark) & To_String (Problem);
+		Ada_Problem : String (1 .. Length (Problem));
+		for Ada_Problem'Address use To_Address (C.char_const_ptr (Problem));
+		Message : constant String := Image (Mark) & Ada_Problem;
 	begin
 		case Error is
 			when C.yaml.YAML_MEMORY_ERROR =>
@@ -734,8 +737,11 @@ package body YAML is
 	end Set_Width;
 	
 	function Version return String is
+		P : constant C.char_const_ptr := C.yaml.yaml_get_version_string;
+		S : String (1 .. Length (P));
+		for S'Address use To_Address (P);
 	begin
-		return To_String (C.yaml.yaml_get_version_string);
+		return S;
 	end Version;
 	
 	package body Parsers is
