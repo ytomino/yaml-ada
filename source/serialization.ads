@@ -358,7 +358,7 @@ package Serialization is
 				Item : in out Element_Type));
 	end IO_Set_2012;
 	
-	generic package IO_Set renames IO_Set_2005;
+	generic package IO_Set renames IO_Set_2012;
 	
 private
 	
