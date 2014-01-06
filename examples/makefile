@@ -8,6 +8,8 @@ GNATMAKE=gnatmake
 GCC=$(dir $(shell which $(GNATMAKE)))gcc
 BUILDDIR=build
 IMPORTDIR=import
+LFLAGS=$(shell pkg-config --libs yaml-0.1)
+HFLAGS=-I$(shell pkg-config --variable=includedir yaml-0.1)
 else
 GNATMAKE=$(TARGET)-gnatmake
 GCC=$(TARGET)-gcc
