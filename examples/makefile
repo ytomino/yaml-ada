@@ -3,39 +3,51 @@ SOURCEDIR=../source
 HOST=$(shell gcc -dumpmachine)
 TARGET=$(HOST)
 
+VERSION=$(shell gcc -dumpversion)
+
+BUILDDIR=$(TARGET).build
+
 ifeq ($(TARGET),$(HOST))
 GNATMAKE=gnatmake
 GCC=$(dir $(shell which $(GNATMAKE)))gcc
-BUILDDIR=build
-IMPORTDIR=import
+BINLN=bin
 LFLAGS=$(shell pkg-config --libs yaml-0.1)
 HFLAGS=-I$(shell pkg-config --variable=includedir yaml-0.1)
 else
 GNATMAKE=$(TARGET)-gnatmake
 GCC=$(TARGET)-gcc
-BUILDDIR=build-$(TARGET)
-IMPORTDIR=import-$(TARGET)
+BINLN=
 endif
 
 ifneq ($(DRAKE_RTSROOT),)
-DRAKE_RTSDIR=$(DRAKE_RTSROOT)/$(TARGET)
+DRAKE_RTSDIR=$(DRAKE_RTSROOT)/$(TARGET)/$(VERSION)
 endif
 ifneq ($(DRAKE_RTSDIR),)
-IMPORTDIR:=
+IMPORTDIR=
 MFLAGS=--RTS=$(abspath $(DRAKE_RTSDIR))
+else
+IMPORTDIR=$(BUILDDIR)/import
+MFLAGS=-I$(abspath $(IMPORTDIR))
 endif
+
+EXAMPLES=$(basename $(filter-out b~%,$(wildcard *.adb)))
 
 CFLAGS=-gnata -gnatwa -gnatyy-3chbs
 
-.PHONY: all clean
+.PHONY: all clean $(EXAMPLES)
 
-all: $(BUILDDIR)/test_yaml $(BUILDDIR)/test_serialize $(BUILDDIR)/version
+all: $(BUILDDIR)/test_yaml $(BUILDDIR)/test_serialize $(BUILDDIR)/version $(BINLN)
 
 $(BUILDDIR)/%: %.adb $(BUILDDIR) $(IMPORTDIR) $(wildcard $(SOURCEDIR)/*)
-	cd $(BUILDDIR) && $(GNATMAKE) -g $(MFLAGS) -I../$(SOURCEDIR) -I../$(IMPORTDIR) $(CFLAGS) ../$< -largs $(LFLAGS)
+	cd $(BUILDDIR) && $(GNATMAKE) -g $(MFLAGS) -I../$(SOURCEDIR) $(CFLAGS) ../$< -largs $(LFLAGS)
 
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
+
+$(BINLN): $(BUILDDIR)
+	ln -s $(BUILDDIR) $(BINLN)
+
+$(EXAMPLES): %: $(BUILDDIR)/%
 
 ifneq ($(IMPORTDIR),)
 $(IMPORTDIR): $(SOURCEDIR)/import.h
@@ -43,5 +55,5 @@ $(IMPORTDIR): $(SOURCEDIR)/import.h
 endif
 
 clean:
-	-rm -r build* import*
+	-rm -rf *.build bin
 	-rm test_yaml.yaml test_serialize.yaml

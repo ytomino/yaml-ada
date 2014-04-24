@@ -1,4 +1,4 @@
-/build
-/import
+/*.build/
+/bin
 /test_yaml.yaml
 /test_serialize.yaml
