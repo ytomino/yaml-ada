@@ -274,8 +274,13 @@ private
 		
 	private
 		
+		type Uninitialized_yaml_parser_t is record
+			X : aliased C.yaml.yaml_parser_t;
+		end record;
+		pragma Suppress_Initialization (Uninitialized_yaml_parser_t);
+		
 		type Parser is limited new Ada.Finalization.Limited_Controlled with record
-			Raw : aliased C.yaml.yaml_parser_t;
+			Raw : aliased Uninitialized_yaml_parser_t;
 		end record;
 		
 		overriding procedure Finalize (Object : in out Parser);
@@ -293,8 +298,13 @@ private
 		
 	private
 		
+		type Uninitialized_yaml_emitter_t is record
+			X : aliased C.yaml.yaml_emitter_t;
+		end record;
+		pragma Suppress_Initialization (Uninitialized_yaml_emitter_t);
+		
 		type Emitter is limited new Ada.Finalization.Limited_Controlled with record
-			Raw : aliased C.yaml.yaml_emitter_t;
+			Raw : aliased Uninitialized_yaml_emitter_t;
 		end record;
 		
 		overriding procedure Finalize (Object : in out Emitter);

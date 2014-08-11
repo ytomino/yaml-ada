@@ -14,6 +14,7 @@ package body YAML is
 	
 	type yaml_tag_directive_t_array is array (C.size_t range <>) of
 		aliased C.yaml.yaml_tag_directive_t;
+	pragma Suppress_Initialization (yaml_tag_directive_t_array);
 	type yaml_tag_directive_t_array_access is access yaml_tag_directive_t_array;
 	procedure Free is new Ada.Unchecked_Deallocation (
 		yaml_tag_directive_t_array,
@@ -171,7 +172,7 @@ package body YAML is
 		Expected : C.yaml.yaml_event_type_t)
 	is
 		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
-		Ev : aliased C.yaml.yaml_event_t;
+		Ev : aliased C.yaml.yaml_event_t := (others => <>);
 		T : C.yaml.yaml_event_type_t;
 	begin
 		if C.yaml.yaml_parser_parse (Pa, Ev'Access) = 0 then
@@ -479,7 +480,7 @@ package body YAML is
 	
 	procedure Emit (Object : in out Emitter; Event : in YAML.Event) is
 		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
-		Ev : aliased C.yaml.yaml_event_t;
+		Ev : aliased C.yaml.yaml_event_t := (others => <>);
 	begin
 		case Event.Event_Type is
 			when No_Event =>
@@ -859,12 +860,12 @@ package body YAML is
 		
 		function Raw (X : Parser) return not null access C.yaml.yaml_parser_t is
 		begin
-			return X.Raw'Unrestricted_Access;
+			return X.Raw.X'Unrestricted_Access;
 		end Raw;
 		
 		overriding procedure Finalize (Object : in out Parser) is
 		begin
-			C.yaml.yaml_parser_delete (Object.Raw'Access);
+			C.yaml.yaml_parser_delete (Object.Raw.X'Access);
 		end Finalize;
 		
 	end Parsers;
@@ -873,12 +874,12 @@ package body YAML is
 		
 		function Raw (X : Emitter) return not null access C.yaml.yaml_emitter_t is
 		begin
-			return X.Raw'Unrestricted_Access;
+			return X.Raw.X'Unrestricted_Access;
 		end Raw;
 		
 		overriding procedure Finalize (Object : in out Emitter) is
 		begin
-			C.yaml.yaml_emitter_delete (Object.Raw'Access);
+			C.yaml.yaml_emitter_delete (Object.Raw.X'Access);
 		end Finalize;
 		
 	end Emitters;
