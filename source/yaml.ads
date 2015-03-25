@@ -194,8 +194,8 @@ package YAML is
 	
 	procedure Flush (Object : in out Emitter);
 	
-	Data_Error : exception renames Ada.IO_Exceptions.Data_Error;
 	Status_Error : exception renames Ada.IO_Exceptions.Status_Error;
+	Data_Error : exception renames Ada.IO_Exceptions.Data_Error;
 	
 private
 	
