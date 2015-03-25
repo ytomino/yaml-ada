@@ -277,9 +277,10 @@ private
 		
 		type Parser is limited private;
 		
-		function Raw (X : Parser) return not null access C.yaml.yaml_parser_t;
+		function Reference (Object : in out Parser)
+			return not null access C.yaml.yaml_parser_t;
 		
-		pragma Inline (Raw);
+		pragma Inline (Reference);
 		
 	private
 		
@@ -302,9 +303,10 @@ private
 		
 		type Emitter is limited private;
 		
-		function Raw (X : Emitter) return not null access C.yaml.yaml_emitter_t;
+		function Reference (Object : in out Emitter)
+			return not null access C.yaml.yaml_emitter_t;
 		
-		pragma Inline (Raw);
+		pragma Inline (Reference);
 		
 	private
 		

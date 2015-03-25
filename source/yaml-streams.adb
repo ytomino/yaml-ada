@@ -61,9 +61,8 @@ package body YAML.Streams is
 		return Parser is
 	begin
 		return Result : Parser do
-			pragma Unmodified (Result);
 			declare
-				Pa : constant not null access C.yaml.yaml_parser_t := Raw (Result);
+				Pa : constant not null access C.yaml.yaml_parser_t := Reference (Result);
 			begin
 				if C.yaml.yaml_parser_initialize (Pa) = 0 then
 					Raise_Error (Pa.error, Pa.problem, null);
@@ -81,9 +80,8 @@ package body YAML.Streams is
 		return Emitter is
 	begin
 		return Result : Emitter do
-			pragma Unmodified (Result);
 			declare
-				Em : constant not null access C.yaml.yaml_emitter_t := Raw (Result);
+				Em : constant not null access C.yaml.yaml_emitter_t := Reference (Result);
 			begin
 				if C.yaml.yaml_emitter_initialize (Em) = 0 then
 					Raise_Error (Em.error, Em.problem, null);

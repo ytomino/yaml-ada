@@ -171,7 +171,7 @@ package body YAML is
 		Object : in out Parser;
 		Expected : C.yaml.yaml_event_type_t)
 	is
-		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
+		Pa : constant not null access C.yaml.yaml_parser_t := Reference (Object);
 		Ev : aliased C.yaml.yaml_event_t := (others => <>);
 		T : C.yaml.yaml_event_type_t;
 	begin
@@ -233,7 +233,7 @@ package body YAML is
 		Object : in out Parser;
 		Parsed_Data : out Parsed_Data_Type)
 	is
-		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
+		Pa : constant not null access C.yaml.yaml_parser_t := Reference (Object);
 		Ev : C.yaml.yaml_event_t renames Parsed_Data.yaml_event;
 	begin
 		if C.yaml.yaml_parser_parse (Pa, Ev'Access) = 0 then
@@ -443,9 +443,8 @@ package body YAML is
 		return Parser is
 	begin
 		return Result : Parser do
-			pragma Unmodified (Result);
 			declare
-				Pa : constant not null access C.yaml.yaml_parser_t := Raw (Result);
+				Pa : constant not null access C.yaml.yaml_parser_t := Reference (Result);
 			begin
 				if C.yaml.yaml_parser_initialize (Pa) = 0 then
 					Raise_Error (Pa.error, Pa.problem, null);
@@ -463,9 +462,8 @@ package body YAML is
 		return Emitter is
 	begin
 		return Result : Emitter do
-			pragma Unmodified (Result);
 			declare
-				Em : constant not null access C.yaml.yaml_emitter_t := Raw (Result);
+				Em : constant not null access C.yaml.yaml_emitter_t := Reference (Result);
 			begin
 				if C.yaml.yaml_emitter_initialize (Em) = 0 then
 					Raise_Error (Em.error, Em.problem, null);
@@ -479,7 +477,7 @@ package body YAML is
 	end Create;
 	
 	procedure Emit (Object : in out Emitter; Event : in YAML.Event) is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 		Ev : aliased C.yaml.yaml_event_t := (others => <>);
 	begin
 		case Event.Event_Type is
@@ -684,7 +682,7 @@ package body YAML is
 	end Finalize;
 	
 	procedure Flush (Object : in out Emitter) is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 	begin
 		if C.yaml.yaml_emitter_flush (Em) = 0 then
 			Raise_Error (Em.error, Em.problem, null);
@@ -762,7 +760,7 @@ package body YAML is
 		Object : in out Emitter;
 		Break : in Line_Break)
 	is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 	begin
 		C.yaml.yaml_emitter_set_break (
 			Em,
@@ -773,7 +771,7 @@ package body YAML is
 		Object : in out Emitter;
 		Canonical : in Boolean)
 	is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 	begin
 		C.yaml.yaml_emitter_set_canonical (
 			Em,
@@ -784,7 +782,7 @@ package body YAML is
 		Object : in out Parser;
 		Encoding : in YAML.Encoding)
 	is
-		Pa : constant not null access C.yaml.yaml_parser_t := Raw (Object);
+		Pa : constant not null access C.yaml.yaml_parser_t := Reference (Object);
 	begin
 		C.yaml.yaml_parser_set_encoding (
 			Pa,
@@ -795,7 +793,7 @@ package body YAML is
 		Object : in out Emitter;
 		Encoding : in YAML.Encoding)
 	is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 	begin
 		C.yaml.yaml_emitter_set_encoding (
 			Em,
@@ -806,7 +804,7 @@ package body YAML is
 		Object : in out Emitter;
 		Indent : in Indent_Width)
 	is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 	begin
 		C.yaml.yaml_emitter_set_indent (
 			Em,
@@ -817,7 +815,7 @@ package body YAML is
 		Object : in out Emitter;
 		Unicode : in Boolean)
 	is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 	begin
 		C.yaml.yaml_emitter_set_unicode (
 			Em,
@@ -828,7 +826,7 @@ package body YAML is
 		Object : in out Emitter;
 		Width : in Line_Width)
 	is
-		Em : constant not null access C.yaml.yaml_emitter_t := Raw (Object);
+		Em : constant not null access C.yaml.yaml_emitter_t := Reference (Object);
 	begin
 		C.yaml.yaml_emitter_set_width (
 			Em,
@@ -857,10 +855,11 @@ package body YAML is
 	
 	package body Parsers is
 		
-		function Raw (X : Parser) return not null access C.yaml.yaml_parser_t is
+		function Reference (Object : in out Parser)
+			return not null access C.yaml.yaml_parser_t is
 		begin
-			return X.Raw.X'Unrestricted_Access;
-		end Raw;
+			return Object.Raw.X'Unchecked_Access;
+		end Reference;
 		
 		overriding procedure Finalize (Object : in out Parser) is
 		begin
@@ -871,10 +870,11 @@ package body YAML is
 	
 	package body Emitters is
 		
-		function Raw (X : Emitter) return not null access C.yaml.yaml_emitter_t is
+		function Reference (Object : in out Emitter)
+			return not null access C.yaml.yaml_emitter_t is
 		begin
-			return X.Raw.X'Unrestricted_Access;
-		end Raw;
+			return Object.Raw.X'Unchecked_Access;
+		end Reference;
 		
 		overriding procedure Finalize (Object : in out Emitter) is
 		begin
