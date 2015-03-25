@@ -181,7 +181,7 @@ package body YAML is
 		T := Ev.F_type;
 		C.yaml.yaml_event_delete (Ev'Access);
 		if T /= Expected then
-			raise Status_Error;
+			raise Data_Error;
 		end if;
 	end Parse_Expection;
 	
@@ -754,9 +754,8 @@ package body YAML is
 			when C.yaml.YAML_SCANNER_ERROR | C.yaml.YAML_PARSER_ERROR =>
 				raise Data_Error with Message;
 			when others =>
-				null; -- move to below to suppress the warning, bug(?) of gcc-4.5.1
+				raise Use_Error with Message;
 		end case;
-		raise Status_Error with Message;
 	end Raise_Error;
 	
 	procedure Set_Break (

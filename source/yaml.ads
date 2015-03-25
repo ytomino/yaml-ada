@@ -200,6 +200,8 @@ package YAML is
 	
 	Status_Error : exception
 		renames Ada.IO_Exceptions.Status_Error;
+	Use_Error : exception
+		renames Ada.IO_Exceptions.Use_Error;
 	Data_Error : exception
 		renames Ada.IO_Exceptions.Data_Error;
 	
