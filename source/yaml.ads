@@ -130,9 +130,12 @@ package YAML is
 	Sequence_Tag : constant String := "tag:yaml.org,2002:seq";
 	Mapping_Tag : constant String := "tag:yaml.org,2002:map";
 	
-	Default_Scalar_Tag : String renames String_Tag;
-	Default_Sequence_tag : String renames Sequence_Tag;
-	Default_Mapping_Tag : String renames Mapping_Tag;
+	Default_Scalar_Tag : String
+		renames String_Tag;
+	Default_Sequence_tag : String
+		renames Sequence_Tag;
+	Default_Mapping_Tag : String
+		renames Mapping_Tag;
 	
 	type Parser (<>) is limited private;
 	
@@ -165,12 +168,13 @@ package YAML is
 	
 	function Value (Parsing_Entry : Parsing_Entry_Type)
 		return Event_Reference_Type;
-	pragma Inline (Value);
 	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
 		return Mark_Reference_Type;
-	pragma Inline (Start_Mark);
 	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
 		return Mark_Reference_Type;
+	
+	pragma Inline (Value);
+	pragma Inline (Start_Mark);
 	pragma Inline (End_Mark);
 	
 	procedure Parse (
@@ -194,8 +198,10 @@ package YAML is
 	
 	procedure Flush (Object : in out Emitter);
 	
-	Status_Error : exception renames Ada.IO_Exceptions.Status_Error;
-	Data_Error : exception renames Ada.IO_Exceptions.Data_Error;
+	Status_Error : exception
+		renames Ada.IO_Exceptions.Status_Error;
+	Data_Error : exception
+		renames Ada.IO_Exceptions.Data_Error;
 	
 private
 	
@@ -270,6 +276,7 @@ private
 		type Parser is limited private;
 		
 		function Raw (X : Parser) return not null access C.yaml.yaml_parser_t;
+		
 		pragma Inline (Raw);
 		
 	private
@@ -294,6 +301,7 @@ private
 		type Emitter is limited private;
 		
 		function Raw (X : Emitter) return not null access C.yaml.yaml_emitter_t;
+		
 		pragma Inline (Raw);
 		
 	private

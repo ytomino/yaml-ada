@@ -189,7 +189,8 @@ package Serialization is
 				Item : in out Element_Type));
 	end IO_Map_2012;
 	
-	generic package IO_Map renames IO_Map_2012;
+	generic package IO_Map
+		renames IO_Map_2012;
 	
 	-- sequence
 	
@@ -286,7 +287,8 @@ package Serialization is
 				Item : in out Element_Type));
 	end IO_List_2012;
 	
-	generic package IO_List renames IO_List_2012;
+	generic package IO_List
+		renames IO_List_2012;
 	
 	generic
 		type Cursor is private;
@@ -358,7 +360,8 @@ package Serialization is
 				Item : in out Element_Type));
 	end IO_Set_2012;
 	
-	generic package IO_Set renames IO_Set_2012;
+	generic package IO_Set
+		renames IO_Set_2012;
 	
 private
 	
