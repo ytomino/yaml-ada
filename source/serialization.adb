@@ -263,7 +263,7 @@ package body Serialization is
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
-			Value : in out Container_Type;
+			Value : aliased in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
 				Name : in String;
@@ -317,7 +317,7 @@ package body Serialization is
 		
 		procedure IO (
 			Object : not null access Serializer;
-			Value : in out Container_Type;
+			Value : aliased in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
 				Name : in String;
@@ -475,7 +475,7 @@ package body Serialization is
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
-			Value : in out Container_Type;
+			Value : aliased in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
 				Item : in out Element_Type)) is
@@ -518,7 +518,7 @@ package body Serialization is
 		
 		procedure IO (
 			Object : not null access Serializer;
-			Value : in out Container_Type;
+			Value : aliased in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
 				Item : in out Element_Type)) is
@@ -596,7 +596,7 @@ package body Serialization is
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
-			Value : in out Container_Type;
+			Value : aliased in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
 				Item : in out Element_Type)) is
@@ -644,7 +644,7 @@ package body Serialization is
 		
 		procedure IO (
 			Object : not null access Serializer;
-			Value : in out Container_Type;
+			Value : aliased in out Container_Type;
 			Callback : not null access procedure (
 				Object : not null access Serializer;
 				Item : in out Element_Type)) is
