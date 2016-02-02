@@ -273,7 +273,7 @@ private
 	
 	overriding procedure Finalize (Object : in out Parsing_Entry_Type);
 	
-	package Parsers is
+	package Controlled_Parsers is
 		
 		type Parser is limited private;
 		
@@ -295,11 +295,11 @@ private
 		
 		overriding procedure Finalize (Object : in out Parser);
 		
-	end Parsers;
+	end Controlled_Parsers;
 	
-	type Parser is new Parsers.Parser;
+	type Parser is new Controlled_Parsers.Parser;
 	
-	package Emitters is
+	package Controlled_Emitters is
 		
 		type Emitter is limited private;
 		
@@ -321,9 +321,9 @@ private
 		
 		overriding procedure Finalize (Object : in out Emitter);
 		
-	end Emitters;
+	end Controlled_Emitters;
 	
-	type Emitter is new Emitters.Emitter;
+	type Emitter is new Controlled_Emitters.Emitter;
 	
 	procedure Raise_Error (
 		Error : in C.yaml.yaml_error_type_t;

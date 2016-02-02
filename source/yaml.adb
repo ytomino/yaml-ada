@@ -860,7 +860,7 @@ package body YAML is
 		return S;
 	end Version;
 	
-	package body Parsers is
+	package body Controlled_Parsers is
 		
 		function Reference (Object : in out Parser)
 			return not null access C.yaml.yaml_parser_t is
@@ -873,9 +873,9 @@ package body YAML is
 			C.yaml.yaml_parser_delete (Object.Raw.X'Access);
 		end Finalize;
 		
-	end Parsers;
+	end Controlled_Parsers;
 	
-	package body Emitters is
+	package body Controlled_Emitters is
 		
 		function Reference (Object : in out Emitter)
 			return not null access C.yaml.yaml_emitter_t is
@@ -888,6 +888,6 @@ package body YAML is
 			C.yaml.yaml_emitter_delete (Object.Raw.X'Access);
 		end Finalize;
 		
-	end Emitters;
+	end Controlled_Emitters;
 	
 end YAML;
