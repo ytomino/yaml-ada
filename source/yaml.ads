@@ -277,7 +277,7 @@ private
 		
 		type Parser is limited private;
 		
-		function Reference (Object : in out Parser)
+		function Reference (Object : in out YAML.Parser)
 			return not null access C.yaml.yaml_parser_t;
 		
 		pragma Inline (Reference);
@@ -303,7 +303,7 @@ private
 		
 		type Emitter is limited private;
 		
-		function Reference (Object : in out Emitter)
+		function Reference (Object : in out YAML.Emitter)
 			return not null access C.yaml.yaml_emitter_t;
 		
 		pragma Inline (Reference);

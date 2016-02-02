@@ -62,13 +62,14 @@ package body YAML.Streams is
 	begin
 		return Result : Parser do
 			declare
-				Pa : constant not null access C.yaml.yaml_parser_t := Reference (Result);
+				Raw_Result : constant not null access C.yaml.yaml_parser_t :=
+					Controlled_Parsers.Reference (Result);
 			begin
-				if C.yaml.yaml_parser_initialize (Pa) = 0 then
-					Raise_Error (Pa.error, Pa.problem, null);
+				if C.yaml.yaml_parser_initialize (Raw_Result) = 0 then
+					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
 				end if;
 				C.yaml.yaml_parser_set_input (
-					Pa,
+					Raw_Result,
 					Read_Handler'Access,
 					C.void_ptr (Stream.all'Address));
 			end;
@@ -81,13 +82,14 @@ package body YAML.Streams is
 	begin
 		return Result : Emitter do
 			declare
-				Em : constant not null access C.yaml.yaml_emitter_t := Reference (Result);
+				Raw_Result : constant not null access C.yaml.yaml_emitter_t :=
+					Controlled_Emitters.Reference (Result);
 			begin
-				if C.yaml.yaml_emitter_initialize (Em) = 0 then
-					Raise_Error (Em.error, Em.problem, null);
+				if C.yaml.yaml_emitter_initialize (Raw_Result) = 0 then
+					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
 				end if;
 				C.yaml.yaml_emitter_set_output (
-					Em,
+					Raw_Result,
 					Write_Handler'Access,
 					C.void_ptr (Stream.all'Address));
 			end;
