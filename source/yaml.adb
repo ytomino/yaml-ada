@@ -37,10 +37,15 @@ package body YAML is
 					C.yaml.yaml_char_t_ptr);
 				Length : constant C.size_t := S'Length;
 				p : constant C.void_ptr := C.stdlib.malloc (Length + 1);
-				Dummy : C.void_ptr;
-				pragma Unreferenced (Dummy);
 			begin
-				Dummy := C.string.memmove (p, C.void_const_ptr (S.all'Address), Length);
+				declare
+					Dummy : C.void_ptr;
+				begin
+					Dummy := C.string.memmove (
+						p,
+						C.void_const_ptr (S.all'Address),
+						Length);
+				end;
 				Cast (Cast (Cast (p)) + C.ptrdiff_t (Length)).all :=
 					C.yaml.yaml_char_t'Val (0);
 				return Cast (p);
@@ -78,14 +83,16 @@ package body YAML is
 			declare
 				Length : constant Natural :=
 					Natural (C.string.strlen (To_char_const_ptr (S)));
-				Dummy : C.void_ptr;
-				pragma Unreferenced (Dummy);
 			begin
 				return Result : constant String_Access := new String (1 .. Length) do
-					Dummy := C.string.memmove (
-						C.void_ptr (Result.all'Address),
-						C.void_const_ptr (S.all'Address),
-						C.size_t (Length));
+					declare
+						Dummy : C.void_ptr;
+					begin
+						Dummy := C.string.memmove (
+							C.void_ptr (Result.all'Address),
+							C.void_const_ptr (S.all'Address),
+							C.size_t (Length));
+					end;
 				end return;
 			end;
 		end if;
