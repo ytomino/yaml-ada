@@ -1,3 +1,4 @@
+with Ada.IO_Exceptions;
 with Ada.Unchecked_Conversion;
 package body YAML.Streams is
 	use type C.signed_int;
@@ -25,7 +26,11 @@ package body YAML.Streams is
 		for Ada_Data'Address use buffer.all'Address;
 		Last : Ada.Streams.Stream_Element_Offset;
 	begin
-		Ada.Streams.Read (Stream.all, Ada_Data, Last);
+		begin
+			Ada.Streams.Read (Stream.all, Ada_Data, Last);
+		exception
+			when Ada.IO_Exceptions.End_Error => Last := 0;
+		end;
 		size_read.all := C.size_t (Last);
 		return 1;
 	end Read_Handler;
