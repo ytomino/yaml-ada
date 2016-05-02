@@ -689,7 +689,8 @@ package body YAML is
 	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.End_Mark'Access);
+		return (Element => Parsing_Entry.Data.End_Mark'Unrestricted_Access);
+			-- [gcc-6] wrongly detected as dangling
 	end End_Mark;
 	
 	overriding procedure Finalize (Object : in out Parsing_Entry_Type) is
@@ -854,13 +855,15 @@ package body YAML is
 	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.Start_Mark'Access);
+		return (Element => Parsing_Entry.Data.Start_Mark'Unrestricted_Access);
+			-- [gcc-6] wrongly detected as dangling
 	end Start_Mark;
 	
 	function Value (Parsing_Entry : Parsing_Entry_Type)
 		return Event_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.Event'Access);
+		return (Element => Parsing_Entry.Data.Event'Unrestricted_Access);
+			-- [gcc-6] wrongly detected as dangling
 	end Value;
 	
 	function Version return String is
