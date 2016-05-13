@@ -597,7 +597,6 @@ package body YAML is
 					Ada_Value : String renames Event.Value.all;
 					C_Value : array (0 .. Ada_Value'Length - 1) of aliased C.yaml.yaml_char_t;
 					for C_Value'Address use Ada_Value'Address;
-					pragma Suppress (Index_Check, C_Value);
 					Error : Boolean;
 				begin
 					Anchor := strdup (Event.Anchor);
