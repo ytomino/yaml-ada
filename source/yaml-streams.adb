@@ -8,8 +8,9 @@ package body YAML.Streams is
 		buffer : access C.unsigned_char;
 		size : C.size_t;
 		size_read : access C.size_t)
-		return C.signed_int;
-	pragma Convention (C, Read_Handler);
+		return C.signed_int
+		with Convention => C;
+	
 	function Read_Handler (
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
@@ -39,8 +40,9 @@ package body YAML.Streams is
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
 		size : C.size_t)
-		return C.signed_int;
-	pragma Convention (C, Write_Handler);
+		return C.signed_int
+		with Convention => C;
+	
 	function Write_Handler (
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;

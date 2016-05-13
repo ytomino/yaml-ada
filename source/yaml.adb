@@ -131,8 +131,9 @@ package body YAML is
 		buffer : access C.unsigned_char;
 		size : C.size_t;
 		size_read : access C.size_t)
-		return C.signed_int;
-	pragma Convention (C, Read_Handler);
+		return C.signed_int
+		with Convention => C;
+	
 	function Read_Handler (
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
@@ -140,8 +141,8 @@ package body YAML is
 		size_read : access C.size_t)
 		return C.signed_int
 	is
-		procedure Input (Item : out String; Last : out Natural);
-		pragma Import (Ada, Input);
+		procedure Input (Item : out String; Last : out Natural)
+			with Import;
 		for Input'Address use System.Address (data);
 		Ada_Data : String (1 .. Natural (size));
 		for Ada_Data'Address use buffer.all'Address;
@@ -156,16 +157,17 @@ package body YAML is
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
 		size : C.size_t)
-		return C.signed_int;
-	pragma Convention (C, Write_Handler);
+		return C.signed_int
+		with Convention => C;
+	
 	function Write_Handler (
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
 		size : C.size_t)
 		return C.signed_int
 	is
-		procedure Output (Item : in String);
-		pragma Import (Ada, Output);
+		procedure Output (Item : in String)
+			with Import;
 		for Output'Address use System.Address (data);
 		Ada_Data : String (1 .. Natural (size));
 		for Ada_Data'Address use buffer.all'Address;
