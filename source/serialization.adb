@@ -159,6 +159,8 @@ package body Serialization is
 		Default : in Boolean)
 		renames IO_Boolean.IO;
 	
+	-- implementation of mapping
+	
 	procedure IO (
 		Object : not null access Serializer;
 		Name : in String;
@@ -327,6 +329,8 @@ package body Serialization is
 		end IO;
 		
 	end IO_Map_2012;
+	
+	-- implementation of sequence
 	
 	package body IO_Array is
 		
