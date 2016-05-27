@@ -109,7 +109,7 @@ package body YAML is
 			Constraints : System.Address;
 		end record;
 		Fat : Fat_Type;
-		Result : String_Access;
+		Result : aliased String_Access;
 		for Fat'Address use Result'Address;
 	begin
 		Fat.Data := S.all'Address;
@@ -329,7 +329,7 @@ package body YAML is
 			when C.yaml.YAML_ALIAS_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : String (
+					Anchor_S : aliased String (
 						1 ..
 						Length (To_char_const_ptr (Ev.data.alias.anchor)));
 					for Anchor_S'Address
@@ -346,7 +346,7 @@ package body YAML is
 			when C.yaml.YAML_SCALAR_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : String (
+					Anchor_S : aliased String (
 						1 ..
 						Length (To_char_const_ptr (Ev.data.scalar.anchor)));
 					for Anchor_S'Address
@@ -355,7 +355,7 @@ package body YAML is
 						Anchor_S'Unrestricted_Access,
 						Parsed_Data.Anchor_Constraint'Access);
 					-- tag
-					Tag_S : String (
+					Tag_S : aliased String (
 						1 ..
 						Length (To_char_const_ptr (Ev.data.scalar.tag)));
 					for Tag_S'Address
@@ -364,7 +364,7 @@ package body YAML is
 						Tag_S'Unrestricted_Access,
 						Parsed_Data.Tag_Constraint'Access);
 					-- value
-					Value_S : String (
+					Value_S : aliased String (
 						1 ..
 						Natural (Ev.data.scalar.length));
 					for Value_S'Address
@@ -387,7 +387,7 @@ package body YAML is
 			when C.yaml.YAML_SEQUENCE_START_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : String (
+					Anchor_S : aliased String (
 						1 ..
 						Length (To_char_const_ptr (Ev.data.sequence_start.anchor)));
 					for Anchor_S'Address
@@ -396,7 +396,7 @@ package body YAML is
 						Anchor_S'Unrestricted_Access,
 						Parsed_Data.Anchor_Constraint'Access);
 					-- tag
-					Tag_S : String (
+					Tag_S : aliased String (
 						1 ..
 						Length (To_char_const_ptr (Ev.data.sequence_start.tag)));
 					for Tag_S'Address
@@ -420,7 +420,7 @@ package body YAML is
 			when C.yaml.YAML_MAPPING_START_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : String (
+					Anchor_S : aliased String (
 						1 ..
 						Length (To_char_const_ptr (Ev.data.mapping_start.anchor)));
 					for Anchor_S'Address
@@ -429,7 +429,7 @@ package body YAML is
 						Anchor_S'Unrestricted_Access,
 						Parsed_Data.Anchor_Constraint'Access);
 					-- tag
-					Tag_S : String (
+					Tag_S : aliased String (
 						1 ..
 						Length (To_char_const_ptr (Ev.data.mapping_start.tag)));
 					for Tag_S'Address
