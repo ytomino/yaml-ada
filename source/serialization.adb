@@ -191,6 +191,62 @@ package body Serialization is
 		IO (Object, "", Callback);
 	end IO;
 	
+	function Has_Element (Position : Cursor) return Boolean is
+	begin
+		return Boolean (Position);
+	end Has_Element;
+	
+	function IO (Object : not null access Serializer; Name : String)
+		return Mapping_Iterator_Interfaces.Forward_Iterator'Class
+	is
+		Entry_Presence : Boolean;
+	begin
+		case Object.Direction is
+			when Reading =>
+				if Name = Next_Name (Object.Reader).all
+					and then Next_Kind (Object.Reader) = Enter_Mapping
+				then
+					Advance (Object.Reader, In_Mapping);
+					Entry_Presence := Next_Kind (Object.Reader) /= Leave_Mapping;
+				else
+					Entry_Presence := False;
+				end if;
+			when Writing =>
+				Enter_Mapping (Object.Writer, Name);
+				Entry_Presence := True;
+		end case;
+		return Mapping_Iterator'(
+			Serializer => Object.all'Unchecked_Access,
+			Entry_Presence => Entry_Presence);
+	end IO;
+	
+	function IO (Object : not null access Serializer)
+		return Mapping_Iterator_Interfaces.Forward_Iterator'Class is
+	begin
+		return IO (Object, "");
+	end IO;
+	
+	overriding function First (Object : Mapping_Iterator) return Cursor is
+	begin
+		return Cursor (Object.Entry_Presence);
+	end First;
+	
+	overriding function Next (Object : Mapping_Iterator; Position : Cursor)
+		return Cursor
+	is
+		pragma Unreferenced (Position);
+	begin
+		case Object.Serializer.Direction is
+			when Reading =>
+				Advance_Structure (Object.Serializer.Reader, In_Mapping);
+				return Cursor (
+					Next_Kind (Object.Serializer.Reader) /= Leave_Mapping);
+			when Writing =>
+				Leave_Mapping (Object.Serializer.Writer);
+				return False;
+		end case;
+	end Next;
+	
 	package body IO_Map_2005 is
 		
 		procedure IO (

@@ -1,5 +1,6 @@
 pragma Ada_2012;
 with Ada.Containers;
+with Ada.Iterator_Interfaces;
 with Ada.Strings.Unbounded;
 package Serialization is
 	pragma Preelaborate;
@@ -109,6 +110,15 @@ package Serialization is
 	procedure IO (
 		Object : not null access Serializer;
 		Callback : not null access procedure);
+	
+	type Cursor is private;
+	function Has_Element (Position : Cursor) return Boolean;
+	package Mapping_Iterator_Interfaces is
+		new Ada.Iterator_Interfaces (Cursor, Has_Element);
+	function IO (Object : not null access Serializer; Name : String)
+		return Mapping_Iterator_Interfaces.Forward_Iterator'Class;
+	function IO (Object : not null access Serializer)
+		return Mapping_Iterator_Interfaces.Forward_Iterator'Class;
 	
 	generic
 		type Cursor is private;
@@ -406,5 +416,20 @@ private
 				Writer : not null access Serialization.Writer'Class;
 		end case;
 	end record;
+	
+	-- mapping
+	
+	type Cursor is new Boolean;
+	
+	type Mapping_Iterator is
+		new Mapping_Iterator_Interfaces.Forward_Iterator with
+	record
+		Serializer : not null access Serialization.Serializer;
+		Entry_Presence : Boolean;
+	end record;
+	
+	overriding function First (Object : Mapping_Iterator) return Cursor;
+	overriding function Next (Object : Mapping_Iterator; Position : Cursor)
+		return Cursor;
 	
 end Serialization;
