@@ -39,12 +39,10 @@ package body YAML is
 				p : constant C.void_ptr := C.stdlib.malloc (Length + 1);
 			begin
 				declare
-					Dummy : C.void_ptr;
+					Dest : String (S'Range);
+					for Dest'Address use System.Address (p);
 				begin
-					Dummy := C.string.memmove (
-						p,
-						C.void_const_ptr (S.all'Address),
-						Length);
+					Dest := S.all;
 				end;
 				Cast (Cast (Cast (p)) + C.ptrdiff_t (Length)).all :=
 					C.yaml.yaml_char_t'Val (0);
@@ -86,12 +84,10 @@ package body YAML is
 			begin
 				return Result : constant String_Access := new String (1 .. Length) do
 					declare
-						Dummy : C.void_ptr;
+						Source : String (1 .. Length);
+						for Source'Address use S.all'Address;
 					begin
-						Dummy := C.string.memmove (
-							C.void_ptr (Result.all'Address),
-							C.void_const_ptr (S.all'Address),
-							C.size_t (Length));
+						Result.all := Source;
 					end;
 				end return;
 			end;
@@ -597,7 +593,7 @@ package body YAML is
 					Anchor : C.yaml.yaml_char_t_ptr;
 					Tag : C.yaml.yaml_char_t_ptr;
 					Ada_Value : String renames Event.Value.all;
-					C_Value : array (C.size_t) of aliased C.yaml.yaml_char_t;
+					C_Value : array (0 .. Ada_Value'Length - 1) of aliased C.yaml.yaml_char_t;
 					for C_Value'Address use Ada_Value'Address;
 					Error : Boolean;
 				begin
@@ -607,8 +603,8 @@ package body YAML is
 						Ev'Access,
 						Anchor,
 						Tag,
-						C_Value (0)'Access,
-						Ada_Value'Length,
+						C_Value (C_Value'First)'Access,
+						C_Value'Length,
 						Boolean'Pos (Event.Plain_Implicit_Tag),
 						Boolean'Pos (Event.Quoted_Implicit_Tag),
 						C.yaml.yaml_scalar_style_t'Enum_Val (
