@@ -89,7 +89,8 @@ package body Serialization.YAML is
 					end if;
 					if Event_Tag (First .. Event_Tag'Last) /= Tag then
 						raise Standard.YAML.Data_Error with
-							"""" & Event_Tag & """ is not expected tag (""" & Tag & """) .";
+							"""" & Event_Tag & """ is not expected tag (""" & Tag
+							& """) .";
 					end if;
 				end;
 			end if;
@@ -99,21 +100,23 @@ package body Serialization.YAML is
 	
 	procedure Emit_Name (Object : not null access Writer; Name : in String) is
 	begin
-		Standard.YAML.Emit (Object.Emitter.all, (
-			Event_Type => Standard.YAML.Scalar,
-			Anchor => null,
-			Tag => null,
-			Value => Name'Unrestricted_Access,
-			Plain_Implicit_Tag => True,
-			Quoted_Implicit_Tag => True,
-			Scalar_Style => Standard.YAML.Any));
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Scalar,
+				Anchor => null,
+				Tag => null,
+				Value => Name'Unrestricted_Access,
+				Plain_Implicit_Tag => True,
+				Quoted_Implicit_Tag => True,
+				Scalar_Style => Standard.YAML.Any));
 	end Emit_Name;
 	
 	procedure Emit_Document_End (Object : not null access Writer) is
 	begin
-		Standard.YAML.Emit (Object.Emitter.all, (
-			Event_Type => Standard.YAML.Document_End,
-			Implicit_Indicator => True));
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Document_End,
+				Implicit_Indicator => True));
 	end Emit_Document_End;
 	
 	-- implementation
@@ -172,12 +175,13 @@ package body Serialization.YAML is
 				Implicit_Tag := True;
 			end if;
 		end if;
-		Standard.YAML.Emit (Object.Emitter.all, (
-			Event_Type => Standard.YAML.Mapping_Start,
-			Anchor => null,
-			Tag => Tag,
-			Implicit_Tag => Implicit_Tag,
-			Mapping_Style => Standard.YAML.Any));
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Mapping_Start,
+				Anchor => null,
+				Tag => Tag,
+				Implicit_Tag => Implicit_Tag,
+				Mapping_Style => Standard.YAML.Any));
 		if Tag /= null then
 			Object.Tag := null;
 			Ada.Strings.Unbounded.Free (Tag);
@@ -206,12 +210,13 @@ package body Serialization.YAML is
 				Implicit_Tag := True;
 			end if;
 		end if;
-		Standard.YAML.Emit (Object.Emitter.all, (
-			Event_Type => Standard.YAML.Sequence_Start,
-			Anchor => null,
-			Tag => Tag,
-			Implicit_Tag => Implicit_Tag,
-			Sequence_Style => Standard.YAML.Any));
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Sequence_Start,
+				Anchor => null,
+				Tag => Tag,
+				Implicit_Tag => Implicit_Tag,
+				Sequence_Style => Standard.YAML.Any));
 		if Tag /= null then
 			Object.Tag := null;
 			Ada.Strings.Unbounded.Free (Tag);
@@ -239,8 +244,9 @@ package body Serialization.YAML is
 	
 	overriding procedure Leave_Mapping (Object : not null access Writer) is
 	begin
-		Standard.YAML.Emit (Object.Emitter.all, (
-			Event_Type => Standard.YAML.Mapping_End));
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Mapping_End));
 		Object.Level := Object.Level - 1;
 		if Object.Level = 0 then
 			Emit_Document_End (Object);
@@ -249,8 +255,9 @@ package body Serialization.YAML is
 	
 	overriding procedure Leave_Sequence (Object : not null access Writer) is
 	begin
-		Standard.YAML.Emit (Object.Emitter.all, (
-			Event_Type => Standard.YAML.Sequence_End));
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Sequence_End));
 		Object.Level := Object.Level - 1;
 		if Object.Level = 0 then
 			Emit_Document_End (Object);
@@ -297,14 +304,15 @@ package body Serialization.YAML is
 				Implicit_Tag := True;
 			end if;
 		end if;
-		Standard.YAML.Emit (Object.Emitter.all, (
-			Event_Type => Standard.YAML.Scalar,
-			Anchor => null,
-			Tag => Tag,
-			Value => Item'Unrestricted_Access,
-			Plain_Implicit_Tag => Implicit_Tag,
-			Quoted_Implicit_Tag => Implicit_Tag,
-			Scalar_Style => Standard.YAML.Any));
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Scalar,
+				Anchor => null,
+				Tag => Tag,
+				Value => Item'Unrestricted_Access,
+				Plain_Implicit_Tag => Implicit_Tag,
+				Quoted_Implicit_Tag => Implicit_Tag,
+				Scalar_Style => Standard.YAML.Any));
 		if Tag /= null then
 			Object.Tag := null;
 			Ada.Strings.Unbounded.Free (Tag);
@@ -330,9 +338,7 @@ package body Serialization.YAML is
 			Next_Name => Null_String'Access,
 			Next_Value => Null_String'Access,
 			Level => 0);
-		S := new Serializer'(
-			Direction => Reading,
-			Reader => R);
+		S := new Serializer'(Direction => Reading, Reader => R);
 		return Result : constant Reference_Type := (
 			Ada.Finalization.Limited_Controlled with
 			Serializer => S,
@@ -378,13 +384,8 @@ package body Serialization.YAML is
 		else
 			T := null;
 		end if;
-		W := new Writer'(
-			Emitter => Emitter,
-			Tag => T,
-			Level => 0);
-		S := new Serializer'(
-			Direction => Writing,
-			Writer => W);
+		W := new Writer'(Emitter => Emitter, Tag => T, Level => 0);
+		S := new Serializer'(Direction => Writing, Writer => W);
 		return Result : constant Reference_Type := (
 			Ada.Finalization.Limited_Controlled with
 			Serializer => S,
@@ -394,11 +395,12 @@ package body Serialization.YAML is
 		do
 			pragma Unreferenced (Result);
 			In_Controlled := True;
-			Standard.YAML.Emit (Emitter.all, (
-				Event_Type => Standard.YAML.Document_Start,
-				Implicit_Indicator => False,
-				Version_Directive => null,
-				Tag_Directives => null));
+			Standard.YAML.Emit (
+				Emitter.all,
+				(Event_Type => Standard.YAML.Document_Start,
+					Implicit_Indicator => False,
+					Version_Directive => null,
+					Tag_Directives => null));
 		end return;
 	exception
 		when others =>

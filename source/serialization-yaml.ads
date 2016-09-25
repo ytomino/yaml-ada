@@ -3,7 +3,8 @@ private with Ada.Finalization;
 package Serialization.YAML is
 	pragma Preelaborate;
 	
-	type Reference_Type (Serializer : not null access Serialization.Serializer) is
+	type Reference_Type (
+		Serializer : not null access Serialization.Serializer) is
 		limited private;
 	
 	function Reading (

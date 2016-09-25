@@ -51,28 +51,29 @@ package YAML is
 			Mapping_End); -- A MAPPING-END event.
 	private
 		for Event_Type use (
-			No_Event => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_NO_EVENT),
-			Stream_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_STREAM_START_EVENT),
-			Stream_End => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_STREAM_END_EVENT),
-			Document_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_DOCUMENT_START_EVENT),
-			Document_End => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_DOCUMENT_END_EVENT),
-			Alias => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_ALIAS_EVENT),
-			Scalar => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_SCALAR_EVENT),
-			Sequence_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_SEQUENCE_START_EVENT),
-			Sequence_End => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_SEQUENCE_END_EVENT),
-			Mapping_Start => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_MAPPING_START_EVENT),
-			Mapping_End => C.yaml.yaml_event_type_t'Enum_Rep (
-				C.yaml.YAML_MAPPING_END_EVENT));
+			No_Event => C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_NO_EVENT),
+			Stream_Start =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_STREAM_START_EVENT),
+			Stream_End =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_STREAM_END_EVENT),
+			Document_Start =>
+				C.yaml.yaml_event_type_t'Enum_Rep (
+					C.yaml.YAML_DOCUMENT_START_EVENT),
+			Document_End =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_DOCUMENT_END_EVENT),
+			Alias => C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_ALIAS_EVENT),
+			Scalar =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_SCALAR_EVENT),
+			Sequence_Start =>
+				C.yaml.yaml_event_type_t'Enum_Rep (
+					C.yaml.YAML_SEQUENCE_START_EVENT),
+			Sequence_End =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_SEQUENCE_END_EVENT),
+			Mapping_Start =>
+				C.yaml.yaml_event_type_t'Enum_Rep (
+					C.yaml.YAML_MAPPING_START_EVENT),
+			Mapping_End =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_MAPPING_END_EVENT));
 	end Event_Types;
 	type Event_Type is new Event_Types.Event_Type;
 	
@@ -140,10 +141,14 @@ package YAML is
 	type Parser (<>) is limited private;
 	
 	function Create (
-		Input : not null access procedure (Item : out String; Last : out Natural))
+		Input : not null access procedure (
+			Item : out String;
+			Last : out Natural))
 		return Parser;
 	
-	procedure Set_Encoding (Object : in out Parser; Encoding : in YAML.Encoding);
+	procedure Set_Encoding (
+		Object : in out Parser;
+		Encoding : in YAML.Encoding);
 	
 	procedure Parse (
 		Object : in out Parser;
@@ -183,11 +188,12 @@ package YAML is
 	
 	type Emitter (<>) is limited private;
 	
-	function Create (
-		Output : not null access procedure (Item : in String))
+	function Create (Output : not null access procedure (Item : in String))
 		return Emitter;
 	
-	procedure Set_Encoding (Object : in out Emitter; Encoding : in YAML.Encoding);
+	procedure Set_Encoding (
+		Object : in out Emitter;
+		Encoding : in YAML.Encoding);
 	procedure Set_Canonical (Object : in out Emitter; Canonical : in Boolean);
 	procedure Set_Indent (Object : in out Emitter; Indent : in Indent_Width);
 	procedure Set_Width (Object : in out Emitter; Width : in Line_Width);
@@ -210,8 +216,10 @@ private
 	for Encoding use (
 		Any => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_ANY_ENCODING),
 		UTF_8 => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF8_ENCODING),
-		UTF_16LE => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16LE_ENCODING),
-		UTF_16BE => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16BE_ENCODING));
+		UTF_16LE =>
+			C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16LE_ENCODING),
+		UTF_16BE =>
+			C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16BE_ENCODING));
 	
 	for Line_Break use (
 		Any => C.yaml.yaml_break_t'Enum_Rep (C.yaml.YAML_ANY_BREAK),
@@ -220,34 +228,43 @@ private
 		CRLN => C.yaml.yaml_break_t'Enum_Rep (C.yaml.YAML_CRLN_BREAK));
 	
 	for Scalar_Style use (
-		Any => C.yaml.yaml_scalar_style_t'Enum_Rep (
-			C.yaml.YAML_ANY_SCALAR_STYLE),
-		Plain => C.yaml.yaml_scalar_style_t'Enum_Rep (
-			C.yaml.YAML_PLAIN_SCALAR_STYLE),
-		Single_Quoted => C.yaml.yaml_scalar_style_t'Enum_Rep (
-			C.yaml.YAML_SINGLE_QUOTED_SCALAR_STYLE),
-		Double_Quoted => C.yaml.yaml_scalar_style_t'Enum_Rep (
-			C.yaml.YAML_DOUBLE_QUOTED_SCALAR_STYLE),
-		Literal => C.yaml.yaml_scalar_style_t'Enum_Rep (
-			C.yaml.YAML_LITERAL_SCALAR_STYLE),
-		Folded => C.yaml.yaml_scalar_style_t'Enum_Rep (
-			C.yaml.YAML_FOLDED_SCALAR_STYLE));
+		Any =>
+			C.yaml.yaml_scalar_style_t'Enum_Rep (C.yaml.YAML_ANY_SCALAR_STYLE),
+		Plain =>
+			C.yaml.yaml_scalar_style_t'Enum_Rep (C.yaml.YAML_PLAIN_SCALAR_STYLE),
+		Single_Quoted =>
+			C.yaml.yaml_scalar_style_t'Enum_Rep (
+				C.yaml.YAML_SINGLE_QUOTED_SCALAR_STYLE),
+		Double_Quoted =>
+			C.yaml.yaml_scalar_style_t'Enum_Rep (
+				C.yaml.YAML_DOUBLE_QUOTED_SCALAR_STYLE),
+		Literal =>
+			C.yaml.yaml_scalar_style_t'Enum_Rep (
+				C.yaml.YAML_LITERAL_SCALAR_STYLE),
+		Folded =>
+			C.yaml.yaml_scalar_style_t'Enum_Rep (
+				C.yaml.YAML_FOLDED_SCALAR_STYLE));
 	
 	for Sequence_Style use (
-		Any => C.yaml.yaml_sequence_style_t'Enum_Rep (
-			C.yaml.YAML_ANY_SEQUENCE_STYLE),
-		Block => C.yaml.yaml_sequence_style_t'Enum_Rep (
-			C.yaml.YAML_BLOCK_SEQUENCE_STYLE),
-		Flow => C.yaml.yaml_sequence_style_t'Enum_Rep (
-			C.yaml.YAML_FLOW_SEQUENCE_STYLE));
+		Any =>
+			C.yaml.yaml_sequence_style_t'Enum_Rep (
+				C.yaml.YAML_ANY_SEQUENCE_STYLE),
+		Block =>
+			C.yaml.yaml_sequence_style_t'Enum_Rep (
+				C.yaml.YAML_BLOCK_SEQUENCE_STYLE),
+		Flow =>
+			C.yaml.yaml_sequence_style_t'Enum_Rep (
+				C.yaml.YAML_FLOW_SEQUENCE_STYLE));
 	
 	for Mapping_Style use (
-		Any => C.yaml.yaml_mapping_style_t'Enum_Rep (
-			C.yaml.YAML_ANY_MAPPING_STYLE),
-		Block => C.yaml.yaml_mapping_style_t'Enum_Rep (
-			C.yaml.YAML_BLOCK_MAPPING_STYLE),
-		Flow => C.yaml.yaml_mapping_style_t'Enum_Rep (
-			C.yaml.YAML_FLOW_MAPPING_STYLE));
+		Any =>
+			C.yaml.yaml_mapping_style_t'Enum_Rep (C.yaml.YAML_ANY_MAPPING_STYLE),
+		Block =>
+			C.yaml.yaml_mapping_style_t'Enum_Rep (
+				C.yaml.YAML_BLOCK_MAPPING_STYLE),
+		Flow =>
+			C.yaml.yaml_mapping_style_t'Enum_Rep (
+				C.yaml.YAML_FLOW_MAPPING_STYLE));
 	
 	type String_Constraint is record
 		First : Positive;
@@ -267,7 +284,9 @@ private
 	end record;
 	pragma Suppress_Initialization (Parsed_Data_Type);
 	
-	type Parsing_Entry_Type is new Ada.Finalization.Limited_Controlled with record
+	type Parsing_Entry_Type is
+		new Ada.Finalization.Limited_Controlled with
+	record
 		Data : aliased Parsed_Data_Type;
 	end record;
 	
@@ -289,7 +308,9 @@ private
 		end record;
 		pragma Suppress_Initialization (Uninitialized_yaml_parser_t);
 		
-		type Parser is limited new Ada.Finalization.Limited_Controlled with record
+		type Parser is
+			limited new Ada.Finalization.Limited_Controlled with
+		record
 			Raw : aliased Uninitialized_yaml_parser_t;
 		end record;
 		
@@ -315,7 +336,9 @@ private
 		end record;
 		pragma Suppress_Initialization (Uninitialized_yaml_emitter_t);
 		
-		type Emitter is limited new Ada.Finalization.Limited_Controlled with record
+		type Emitter is
+			limited new Ada.Finalization.Limited_Controlled with
+		record
 			Raw : aliased Uninitialized_yaml_emitter_t;
 		end record;
 		

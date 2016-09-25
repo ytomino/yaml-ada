@@ -64,11 +64,11 @@ package Serialization is
 			Value : in out Enumeration_Type;
 			Default : in Enumeration_Type);
 	private
-		package Enum_IO is new IO_Custom (
-			Enumeration_Type,
-			Enumeration_Type'Image,
-			Enumeration_Type'Value,
-			Triming => True);
+		package Enum_IO is
+			new IO_Custom (
+				Enumeration_Type, Enumeration_Type'Image,
+				Enumeration_Type'Value,
+				Triming => True);
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
@@ -91,6 +91,7 @@ package Serialization is
 		Name : in String;
 		Value : in out Integer;
 		Default : in Integer);
+	
 	procedure IO (
 		Object : not null access Serializer;
 		Name : in String;
@@ -163,8 +164,8 @@ package Serialization is
 		type Cursor is private;
 		type Element_Type is private;
 		type Container_Type is limited private;
-		type Reference_Type (
-			Element : not null access Element_Type) is limited private;
+		type Reference_Type (Element : not null access Element_Type) is
+			limited private;
 		Default : in Element_Type;
 		with function Has_Element (Position : Cursor) return Boolean is <>;
 		with function First (Container : Container_Type) return Cursor is <>;
@@ -239,7 +240,8 @@ package Serialization is
 		with procedure Update_Element (
 			Container : in out Container_Type;
 			Position : in Cursor;
-			Process : not null access procedure (Element : in out Element_Type)) is <>;
+			Process : not null access procedure (
+				Element : in out Element_Type)) is <>;
 		with procedure Append (
 			Container : in out Container_Type;
 			New_Item : in Element_Type;
@@ -265,8 +267,8 @@ package Serialization is
 		type Cursor is private;
 		type Element_Type is private;
 		type Container_Type is limited private;
-		type Reference_Type (
-			Element : not null access Element_Type) is limited private;
+		type Reference_Type (Element : not null access Element_Type) is
+			limited private;
 		Default : in Element_Type;
 		with function Last (Container : Container_Type) return Cursor is <>;
 		with function Has_Element (Position : Cursor) return Boolean is <>;

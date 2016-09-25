@@ -19,7 +19,8 @@ package body YAML.Streams is
 		return C.signed_int
 	is
 		type Stream_Access is access all Ada.Streams.Root_Stream_Type'Class;
-		function Cast is new Ada.Unchecked_Conversion (C.void_ptr, Stream_Access);
+		function Cast is
+			new Ada.Unchecked_Conversion (C.void_ptr, Stream_Access);
 		Stream : constant Stream_Access := Cast (data);
 		Ada_Data : Ada.Streams.Stream_Element_Array (
 			1 ..
@@ -50,7 +51,8 @@ package body YAML.Streams is
 		return C.signed_int
 	is
 		type Stream_Access is access all Ada.Streams.Root_Stream_Type'Class;
-		function Cast is new Ada.Unchecked_Conversion (C.void_ptr, Stream_Access);
+		function Cast is
+			new Ada.Unchecked_Conversion (C.void_ptr, Stream_Access);
 		Stream : constant Stream_Access := Cast (data);
 		Ada_Data : Ada.Streams.Stream_Element_Array (
 			1 ..
