@@ -641,7 +641,9 @@ package body YAML is
 					Anchor : C.yaml.yaml_char_t_ptr;
 					Tag : C.yaml.yaml_char_t_ptr;
 					Ada_Value : String renames Event.Value.all;
-					C_Value : array (0 .. Ada_Value'Length - 1) of
+					C_Value : array (
+							0 ..
+							C.size_t (Integer'Max (Ada_Value'Length - 1, 0))) of
 						aliased C.yaml.yaml_char_t;
 					for C_Value'Address use Ada_Value'Address;
 					Error : Boolean;
