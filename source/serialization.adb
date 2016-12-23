@@ -142,11 +142,8 @@ package body Serialization is
 		Default : in Integer)
 		renames IO_Integer.IO;
 	
-	package IO_Boolean is new IO_Custom (
-		Boolean,
-		Boolean'Image,
-		Boolean'Value,
-		Triming => False);
+	package IO_Boolean is
+		new IO_Custom (Boolean, Boolean'Image, Boolean'Value, Triming => False);
 	
 	procedure IO (
 		Object : not null access Serializer;

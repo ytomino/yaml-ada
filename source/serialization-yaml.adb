@@ -339,12 +339,13 @@ package body Serialization.YAML is
 			Next_Value => Null_String'Access,
 			Level => 0);
 		S := new Serializer'(Direction => Reading, Reader => R);
-		return Result : constant Reference_Type := (
-			Ada.Finalization.Limited_Controlled with
-			Serializer => S,
-			Serializer_Body => S,
-			Reader_Body => R,
-			Writer_Body => null)
+		return Result : constant Reference_Type :=
+			(Ada.Finalization.Limited_Controlled
+				with
+					Serializer => S,
+					Serializer_Body => S,
+					Reader_Body => R,
+					Writer_Body => null)
 		do
 			pragma Unreferenced (Result);
 			In_Controlled := True;
@@ -386,12 +387,13 @@ package body Serialization.YAML is
 		end if;
 		W := new Writer'(Emitter => Emitter, Tag => T, Level => 0);
 		S := new Serializer'(Direction => Writing, Writer => W);
-		return Result : constant Reference_Type := (
-			Ada.Finalization.Limited_Controlled with
-			Serializer => S,
-			Serializer_Body => S,
-			Reader_Body => null,
-			Writer_Body => W)
+		return Result : constant Reference_Type :=
+			(Ada.Finalization.Limited_Controlled
+				with
+					Serializer => S,
+					Serializer_Body => S,
+					Reader_Body => null,
+					Writer_Body => W)
 		do
 			pragma Unreferenced (Result);
 			In_Controlled := True;

@@ -313,8 +313,8 @@ package body YAML is
 								Natural (
 									(Cast (Ev.data.document_start.tag_directives.F_end)
 											- Cast (
-												Ev.data.document_start.tag_directives.
-													start))
+												Ev.data.document_start.tag_directives
+													.start))
 										/ sizeof_yaml_tag_directive_t);
 							P : C.yaml.yaml_tag_directive_t_ptr;
 						begin
