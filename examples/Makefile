@@ -1,9 +1,7 @@
 SOURCEDIR=../source
 
-HOST=$(shell gcc -dumpmachine)
+HOST:=$(shell gcc -dumpmachine)
 TARGET=$(HOST)
-
-VERSION=$(shell gcc -dumpversion)
 
 BUILDDIR=$(TARGET).build
 
@@ -26,11 +24,13 @@ LFLAGS=-ggdb
 HFLAGS=
 
 ifeq ($(TARGET),$(HOST))
-LFLAGS=$(shell pkg-config --libs yaml-0.1)
-HFLAGS=-I$(shell pkg-config --variable=includedir yaml-0.1)
+LFLAGS:=$(shell pkg-config --libs yaml-0.1)
+YAML_INCDIR:=$(shell pkg-config --variable=includedir yaml-0.1)
+HFLAGS=-I$(YAML_INCDIR)
 endif
 
 ifneq ($(DRAKE_RTSROOT),)
+VERSION:=$(shell gcc -dumpversion)
 DRAKE_RTSDIR=$(DRAKE_RTSROOT)/$(TARGET)/$(VERSION)
 endif
 ifneq ($(DRAKE_RTSDIR),)
