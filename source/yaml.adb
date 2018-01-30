@@ -142,14 +142,13 @@ package body YAML is
 		size_read : access C.size_t)
 		return C.signed_int
 	is
-		procedure Input (Item : out String; Last : out Natural)
-			with Import;
-		for Input'Address use System.Address (data);
+		type I is access procedure (Item : out String; Last : out Natural);
+		function To_Input is new Ada.Unchecked_Conversion (C.void_ptr, I);
 		Ada_Data : String (1 .. Natural (size));
 		for Ada_Data'Address use buffer.all'Address;
 		Last : Natural;
 	begin
-		Input (Ada_Data, Last);
+		To_Input (data) (Ada_Data, Last);
 		size_read.all := C.size_t (Last);
 		return 1;
 	end Read_Handler;
@@ -167,13 +166,12 @@ package body YAML is
 		size : C.size_t)
 		return C.signed_int
 	is
-		procedure Output (Item : in String)
-			with Import;
-		for Output'Address use System.Address (data);
+		type O is access procedure (Item : in String);
+		function To_Output is new Ada.Unchecked_Conversion (C.void_ptr, O);
 		Ada_Data : String (1 .. Natural (size));
 		for Ada_Data'Address use buffer.all'Address;
 	begin
-		Output (Ada_Data);
+		To_Output (data) (Ada_Data);
 		return 1;
 	end Write_Handler;
 	
@@ -494,7 +492,10 @@ package body YAML is
 		Input : not null access procedure (
 			Item : out String;
 			Last : out Natural))
-		return Parser is
+		return Parser
+	is
+		type I is access procedure (Item : out String; Last : out Natural);
+		function To_void_ptr is new Ada.Unchecked_Conversion (I, C.void_ptr);
 	begin
 		return Result : Parser do
 			declare
@@ -507,13 +508,16 @@ package body YAML is
 				C.yaml.yaml_parser_set_input (
 					Raw_Result,
 					Read_Handler'Access,
-					C.void_ptr (Input.all'Address));
+					To_void_ptr (Input));
 			end;
 		end return;
 	end Create;
 	
 	function Create (Output : not null access procedure (Item : in String))
-		return Emitter is
+		return Emitter
+	is
+		type O is access procedure (Item : in String);
+		function To_void_ptr is new Ada.Unchecked_Conversion (O, C.void_ptr);
 	begin
 		return Result : Emitter do
 			declare
@@ -526,7 +530,7 @@ package body YAML is
 				C.yaml.yaml_emitter_set_output (
 					Raw_Result,
 					Write_Handler'Access,
-					C.void_ptr (Output.all'Address));
+					To_void_ptr (Output));
 			end;
 		end return;
 	end Create;
