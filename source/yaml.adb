@@ -645,9 +645,10 @@ package body YAML is
 					Anchor : C.yaml.yaml_char_t_ptr;
 					Tag : C.yaml.yaml_char_t_ptr;
 					Ada_Value : String renames Event.Value.all;
+					Length : constant C.signed_int := Ada_Value'Length;
 					C_Value : array (
 							0 ..
-							C.size_t (Integer'Max (Ada_Value'Length - 1, 0))) of
+							C.size_t (C.signed_int'Max (Length - 1, 0))) of
 						aliased C.yaml.yaml_char_t;
 					for C_Value'Address use Ada_Value'Address;
 					Error : Boolean;
@@ -660,7 +661,7 @@ package body YAML is
 							Anchor,
 							Tag,
 							C_Value (C_Value'First)'Access,
-							C_Value'Length,
+							Length,
 							Boolean'Pos (Event.Plain_Implicit_Tag),
 							Boolean'Pos (Event.Quoted_Implicit_Tag),
 							C.yaml.yaml_scalar_style_t'Enum_Val (
