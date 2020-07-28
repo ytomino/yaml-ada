@@ -1,4 +1,3 @@
-pragma Ada_2012;
 with Ada.Containers;
 with Ada.Iterator_Interfaces;
 with Ada.Strings.Unbounded;

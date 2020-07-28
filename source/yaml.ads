@@ -1,4 +1,3 @@
-pragma Ada_2012;
 with Ada.IO_Exceptions;
 private with C.yaml;
 private with Ada.Finalization;
