@@ -1,5 +1,5 @@
-/*.build/
 /bin
 /test_yaml.yaml
 /test_serialize.yaml
 /*.adc
+/*.noindex
