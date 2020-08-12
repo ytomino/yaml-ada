@@ -88,9 +88,8 @@ package body Serialization.YAML is
 						First := First + 1;
 					end if;
 					if Event_Tag (First .. Event_Tag'Last) /= Tag then
-						raise Standard.YAML.Data_Error with
-							"""" & Event_Tag & """ is not expected tag (""" & Tag
-							& """) .";
+						raise Standard.YAML.Data_Error
+							with """" & Event_Tag & """ is not expected tag (""" & Tag & """) .";
 					end if;
 				end;
 			end if;
@@ -115,8 +114,7 @@ package body Serialization.YAML is
 	begin
 		Standard.YAML.Emit (
 			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Document_End,
-				Implicit_Indicator => True));
+			(Event_Type => Standard.YAML.Document_End, Implicit_Indicator => True));
 	end Emit_Document_End;
 	
 	-- implementation
@@ -332,12 +330,13 @@ package body Serialization.YAML is
 		S : Serializer_Access;
 		In_Controlled : Boolean := False;
 	begin
-		R := new Reader'(
-			Parser => Parser,
-			Next_Kind => End_Of_Stream,
-			Next_Name => Null_String'Access,
-			Next_Value => Null_String'Access,
-			Level => 0);
+		R :=
+			new Reader'(
+				Parser => Parser,
+				Next_Kind => End_Of_Stream,
+				Next_Name => Null_String'Access,
+				Next_Value => Null_String'Access,
+				Level => 0);
 		S := new Serializer'(Direction => Reading, Reader => R);
 		return Result : constant Reference_Type :=
 			(Ada.Finalization.Limited_Controlled

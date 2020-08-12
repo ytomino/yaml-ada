@@ -50,27 +50,26 @@ package YAML is
 			Mapping_End); -- A MAPPING-END event.
 	private
 		for Event_Type use (
-			No_Event => C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_NO_EVENT),
+			No_Event =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_NO_EVENT),
 			Stream_Start =>
 				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_STREAM_START_EVENT),
 			Stream_End =>
 				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_STREAM_END_EVENT),
 			Document_Start =>
-				C.yaml.yaml_event_type_t'Enum_Rep (
-					C.yaml.YAML_DOCUMENT_START_EVENT),
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_DOCUMENT_START_EVENT),
 			Document_End =>
 				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_DOCUMENT_END_EVENT),
-			Alias => C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_ALIAS_EVENT),
+			Alias =>
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_ALIAS_EVENT),
 			Scalar =>
 				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_SCALAR_EVENT),
 			Sequence_Start =>
-				C.yaml.yaml_event_type_t'Enum_Rep (
-					C.yaml.YAML_SEQUENCE_START_EVENT),
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_SEQUENCE_START_EVENT),
 			Sequence_End =>
 				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_SEQUENCE_END_EVENT),
 			Mapping_Start =>
-				C.yaml.yaml_event_type_t'Enum_Rep (
-					C.yaml.YAML_MAPPING_START_EVENT),
+				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_MAPPING_START_EVENT),
 			Mapping_End =>
 				C.yaml.yaml_event_type_t'Enum_Rep (C.yaml.YAML_MAPPING_END_EVENT));
 	end Event_Types;
@@ -140,9 +139,7 @@ package YAML is
 	type Parser (<>) is limited private;
 	
 	function Create (
-		Input : not null access procedure (
-			Item : out String;
-			Last : out Natural))
+		Input : not null access procedure (Item : out String; Last : out Natural))
 		return Parser;
 	
 	procedure Set_Encoding (
@@ -163,11 +160,11 @@ package YAML is
 	type Parsing_Entry_Type is limited private;
 	pragma Preelaborable_Initialization (Parsing_Entry_Type);
 	
-	type Event_Reference_Type (Element : not null access constant Event) is
-		null record
+	type Event_Reference_Type (
+		Element : not null access constant Event) is null record
 		with Implicit_Dereference => Element;
-	type Mark_Reference_Type (Element : not null access constant Mark) is
-		null record
+	type Mark_Reference_Type (
+		Element : not null access constant Mark) is null record
 		with Implicit_Dereference => Element;
 	
 	function Value (Parsing_Entry : Parsing_Entry_Type)
@@ -215,10 +212,8 @@ private
 	for Encoding use (
 		Any => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_ANY_ENCODING),
 		UTF_8 => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF8_ENCODING),
-		UTF_16LE =>
-			C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16LE_ENCODING),
-		UTF_16BE =>
-			C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16BE_ENCODING));
+		UTF_16LE => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16LE_ENCODING),
+		UTF_16BE => C.yaml.yaml_encoding_t'Enum_Rep (C.yaml.YAML_UTF16BE_ENCODING));
 	
 	for Line_Break use (
 		Any => C.yaml.yaml_break_t'Enum_Rep (C.yaml.YAML_ANY_BREAK),
@@ -232,38 +227,29 @@ private
 		Plain =>
 			C.yaml.yaml_scalar_style_t'Enum_Rep (C.yaml.YAML_PLAIN_SCALAR_STYLE),
 		Single_Quoted =>
-			C.yaml.yaml_scalar_style_t'Enum_Rep (
-				C.yaml.YAML_SINGLE_QUOTED_SCALAR_STYLE),
+			C.yaml.yaml_scalar_style_t'Enum_Rep (C.yaml.YAML_SINGLE_QUOTED_SCALAR_STYLE),
 		Double_Quoted =>
-			C.yaml.yaml_scalar_style_t'Enum_Rep (
-				C.yaml.YAML_DOUBLE_QUOTED_SCALAR_STYLE),
+			C.yaml.yaml_scalar_style_t'Enum_Rep (C.yaml.YAML_DOUBLE_QUOTED_SCALAR_STYLE),
 		Literal =>
-			C.yaml.yaml_scalar_style_t'Enum_Rep (
-				C.yaml.YAML_LITERAL_SCALAR_STYLE),
+			C.yaml.yaml_scalar_style_t'Enum_Rep (C.yaml.YAML_LITERAL_SCALAR_STYLE),
 		Folded =>
-			C.yaml.yaml_scalar_style_t'Enum_Rep (
-				C.yaml.YAML_FOLDED_SCALAR_STYLE));
+			C.yaml.yaml_scalar_style_t'Enum_Rep (C.yaml.YAML_FOLDED_SCALAR_STYLE));
 	
 	for Sequence_Style use (
 		Any =>
-			C.yaml.yaml_sequence_style_t'Enum_Rep (
-				C.yaml.YAML_ANY_SEQUENCE_STYLE),
+			C.yaml.yaml_sequence_style_t'Enum_Rep (C.yaml.YAML_ANY_SEQUENCE_STYLE),
 		Block =>
-			C.yaml.yaml_sequence_style_t'Enum_Rep (
-				C.yaml.YAML_BLOCK_SEQUENCE_STYLE),
+			C.yaml.yaml_sequence_style_t'Enum_Rep (C.yaml.YAML_BLOCK_SEQUENCE_STYLE),
 		Flow =>
-			C.yaml.yaml_sequence_style_t'Enum_Rep (
-				C.yaml.YAML_FLOW_SEQUENCE_STYLE));
+			C.yaml.yaml_sequence_style_t'Enum_Rep (C.yaml.YAML_FLOW_SEQUENCE_STYLE));
 	
 	for Mapping_Style use (
 		Any =>
 			C.yaml.yaml_mapping_style_t'Enum_Rep (C.yaml.YAML_ANY_MAPPING_STYLE),
 		Block =>
-			C.yaml.yaml_mapping_style_t'Enum_Rep (
-				C.yaml.YAML_BLOCK_MAPPING_STYLE),
+			C.yaml.yaml_mapping_style_t'Enum_Rep (C.yaml.YAML_BLOCK_MAPPING_STYLE),
 		Flow =>
-			C.yaml.yaml_mapping_style_t'Enum_Rep (
-				C.yaml.YAML_FLOW_MAPPING_STYLE));
+			C.yaml.yaml_mapping_style_t'Enum_Rep (C.yaml.YAML_FLOW_MAPPING_STYLE));
 	
 	type String_Constraint is record
 		First : Positive;
@@ -283,11 +269,10 @@ private
 	end record;
 	pragma Suppress_Initialization (Parsed_Data_Type);
 	
-	type Parsing_Entry_Type is
-		new Ada.Finalization.Limited_Controlled with
-	record
-		Data : aliased Parsed_Data_Type;
-	end record;
+	type Parsing_Entry_Type is new Ada.Finalization.Limited_Controlled
+		with record
+			Data : aliased Parsed_Data_Type;
+		end record;
 	
 	overriding procedure Finalize (Object : in out Parsing_Entry_Type);
 	
@@ -307,11 +292,10 @@ private
 		end record;
 		pragma Suppress_Initialization (Uninitialized_yaml_parser_t);
 		
-		type Parser is
-			limited new Ada.Finalization.Limited_Controlled with
-		record
-			Raw : aliased Uninitialized_yaml_parser_t;
-		end record;
+		type Parser is limited new Ada.Finalization.Limited_Controlled
+			with record
+				Raw : aliased Uninitialized_yaml_parser_t;
+			end record;
 		
 		overriding procedure Finalize (Object : in out Parser);
 		
@@ -335,11 +319,10 @@ private
 		end record;
 		pragma Suppress_Initialization (Uninitialized_yaml_emitter_t);
 		
-		type Emitter is
-			limited new Ada.Finalization.Limited_Controlled with
-		record
-			Raw : aliased Uninitialized_yaml_emitter_t;
-		end record;
+		type Emitter is limited new Ada.Finalization.Limited_Controlled
+			with record
+				Raw : aliased Uninitialized_yaml_emitter_t;
+			end record;
 		
 		overriding procedure Finalize (Object : in out Emitter);
 		

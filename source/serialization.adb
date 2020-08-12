@@ -93,9 +93,8 @@ package body Serialization is
 						begin
 							Value := IO_Custom.Value (Next_Value);
 						exception
-							when Constraint_Error => 
-								raise Constraint_Error with
-									Error_Message (Name, Next_Value);
+							when Constraint_Error =>
+								raise Constraint_Error with Error_Message (Name, Next_Value);
 						end;
 					end if;
 				when Writing =>

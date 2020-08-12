@@ -29,17 +29,11 @@ package body YAML is
 		else
 			declare
 				function Cast is
-					new Ada.Unchecked_Conversion (
-						C.void_ptr,
-						C.yaml.yaml_char_t_ptr);
+					new Ada.Unchecked_Conversion (C.void_ptr, C.yaml.yaml_char_t_ptr);
 				function Cast is
-					new Ada.Unchecked_Conversion (
-						C.yaml.yaml_char_t_ptr,
-						C.ptrdiff_t);
+					new Ada.Unchecked_Conversion (C.yaml.yaml_char_t_ptr, C.ptrdiff_t);
 				function Cast is
-					new Ada.Unchecked_Conversion (
-						C.ptrdiff_t,
-						C.yaml.yaml_char_t_ptr);
+					new Ada.Unchecked_Conversion (C.ptrdiff_t, C.yaml.yaml_char_t_ptr);
 				Length : constant C.size_t := S'Length;
 				p : constant C.void_ptr := C.stdlib.malloc (Length + 1);
 			begin
@@ -81,12 +75,9 @@ package body YAML is
 			return null;
 		else
 			declare
-				Length : constant Natural :=
-					Natural (C.string.strlen (To_char_const_ptr (S)));
+				Length : constant Natural := Natural (C.string.strlen (To_char_const_ptr (S)));
 			begin
-				return Result : constant String_Access :=
-					new String (1 .. Length)
-				do
+				return Result : constant String_Access := new String (1 .. Length) do
 					declare
 						Source : String (1 .. Length);
 						for Source'Address use S.all'Address;
@@ -185,10 +176,7 @@ package body YAML is
 		T : C.yaml.yaml_event_type_t;
 	begin
 		if C.yaml.yaml_parser_parse (Raw_Object, Ev'Access) = 0 then
-			Raise_Error (
-				Raw_Object.error,
-				Raw_Object.problem,
-				Raw_Object.mark'Access);
+			Raise_Error (Raw_Object.error, Raw_Object.problem, Raw_Object.mark'Access);
 		end if;
 		T := Ev.F_type;
 		C.yaml.yaml_event_delete (Ev'Access);
@@ -229,11 +217,9 @@ package body YAML is
 					declare
 						S : String_Access;
 					begin
-						S := Remove_Constant (
-							String_Constant_Access (Tag_Directives (I).Prefix));
+						S := Remove_Constant (String_Constant_Access (Tag_Directives (I).Prefix));
 						Free (S);
-						S := Remove_Constant (
-							String_Constant_Access (Tag_Directives (I).Handle));
+						S := Remove_Constant (String_Constant_Access (Tag_Directives (I).Handle));
 						Free (S);
 					end;
 				end loop;
@@ -252,10 +238,7 @@ package body YAML is
 		Ev : C.yaml.yaml_event_t renames Parsed_Data.yaml_event;
 	begin
 		if C.yaml.yaml_parser_parse (Raw_Object, Ev'Access) = 0 then
-			Raise_Error (
-				Raw_Object.error,
-				Raw_Object.problem,
-				Raw_Object.mark'Access);
+			Raise_Error (Raw_Object.error, Raw_Object.problem, Raw_Object.mark'Access);
 		end if;
 		Parsed_Data.Start_Mark.Index := Integer (Ev.start_mark.index);
 		Parsed_Data.Start_Mark.Line := Integer (Ev.start_mark.line);
@@ -273,8 +256,7 @@ package body YAML is
 						Event_Type => Stream_Start,
 						Encoding =>
 							Encoding'Enum_Val (
-								C.yaml.yaml_encoding_t'Enum_Rep (
-									Ev.data.stream_start.encoding)));
+								C.yaml.yaml_encoding_t'Enum_Rep (Ev.data.stream_start.encoding)));
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_STREAM_END_EVENT =>
 				Parsed_Data.Event := Event'(Event_Type => Stream_End);
@@ -287,8 +269,7 @@ package body YAML is
 					if Ev.data.document_start.version_directive = null then
 						Version_Directive := null;
 					else
-						Version_Directive :=
-							Parsed_Data.Version_Directive'Unchecked_Access;
+						Version_Directive := Parsed_Data.Version_Directive'Unchecked_Access;
 						Version_Directive.Major :=
 							Integer (Ev.data.document_start.version_directive.major);
 						Version_Directive.Minor :=
@@ -297,22 +278,15 @@ package body YAML is
 					if Ev.data.document_start.tag_directives.start /= null then
 						declare
 							function Cast is
-								new Ada.Unchecked_Conversion (
-									C.yaml.yaml_tag_directive_t_ptr,
-									C.ptrdiff_t);
+								new Ada.Unchecked_Conversion (C.yaml.yaml_tag_directive_t_ptr, C.ptrdiff_t);
 							function Cast is
-								new Ada.Unchecked_Conversion (
-									C.ptrdiff_t,
-									C.yaml.yaml_tag_directive_t_ptr);
+								new Ada.Unchecked_Conversion (C.ptrdiff_t, C.yaml.yaml_tag_directive_t_ptr);
 							sizeof_yaml_tag_directive_t : constant C.ptrdiff_t :=
-								C.yaml.yaml_tag_directive_t'Size
-								/ Standard'Storage_Unit;
+								C.yaml.yaml_tag_directive_t'Size / Standard'Storage_Unit;
 							Length : constant Natural :=
 								Natural (
 									(Cast (Ev.data.document_start.tag_directives.F_end)
-											- Cast (
-												Ev.data.document_start.tag_directives
-													.start))
+											- Cast (Ev.data.document_start.tag_directives.start))
 										/ sizeof_yaml_tag_directive_t);
 							P : C.yaml.yaml_tag_directive_t_ptr;
 						begin
@@ -330,8 +304,7 @@ package body YAML is
 							Event_Type => Document_Start,
 							Version_Directive => Version_Directive,
 							Tag_Directives => Tag_Directives,
-							Implicit_Indicator =>
-								Ev.data.document_start.implicit /= 0);
+							Implicit_Indicator => Ev.data.document_start.implicit /= 0);
 				end;
 				Parsed_Data.Delete := Delete_Document_Start_Event'Access;
 			when C.yaml.YAML_DOCUMENT_END_EVENT =>
@@ -343,9 +316,8 @@ package body YAML is
 			when C.yaml.YAML_ALIAS_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : aliased String (
-						1 ..
-						Length (To_char_const_ptr (Ev.data.alias.anchor)));
+					Anchor_S : aliased
+						String (1 .. Length (To_char_const_ptr (Ev.data.alias.anchor)));
 					for Anchor_S'Address use
 						To_Address (To_char_const_ptr (Ev.data.alias.anchor));
 					Anchor_A : constant String_Access :=
@@ -353,16 +325,14 @@ package body YAML is
 							Anchor_S'Unrestricted_Access,
 							Parsed_Data.Anchor_Constraint'Access);
 				begin
-					Parsed_Data.Event :=
-						Event'(Event_Type => Alias, Anchor => Anchor_A);
+					Parsed_Data.Event := Event'(Event_Type => Alias, Anchor => Anchor_A);
 				end;
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_SCALAR_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : aliased String (
-						1 ..
-						Length (To_char_const_ptr (Ev.data.scalar.anchor)));
+					Anchor_S : aliased
+						String (1 .. Length (To_char_const_ptr (Ev.data.scalar.anchor)));
 					for Anchor_S'Address use
 						To_Address (To_char_const_ptr (Ev.data.scalar.anchor));
 					Anchor_A : constant String_Access :=
@@ -370,9 +340,8 @@ package body YAML is
 							Anchor_S'Unrestricted_Access,
 							Parsed_Data.Anchor_Constraint'Access);
 					-- tag
-					Tag_S : aliased String (
-						1 ..
-						Length (To_char_const_ptr (Ev.data.scalar.tag)));
+					Tag_S : aliased
+						String (1 .. Length (To_char_const_ptr (Ev.data.scalar.tag)));
 					for Tag_S'Address use
 						To_Address (To_char_const_ptr (Ev.data.scalar.tag));
 					Tag_A : constant String_Access :=
@@ -380,11 +349,8 @@ package body YAML is
 							Tag_S'Unrestricted_Access,
 							Parsed_Data.Tag_Constraint'Access);
 					-- value
-					Value_S : aliased String (
-						1 ..
-						Natural (Ev.data.scalar.length));
-					for Value_S'Address use
-						To_Address (To_char_const_ptr (Ev.data.scalar.value));
+					Value_S : aliased String (1 .. Natural (Ev.data.scalar.length));
+					for Value_S'Address use To_Address (To_char_const_ptr (Ev.data.scalar.value));
 					Value_A : constant String_Access :=
 						Copy_String_Access (
 							Value_S'Unrestricted_Access,
@@ -397,31 +363,26 @@ package body YAML is
 							Tag => Tag_A,
 							Value => Value_A,
 							Plain_Implicit_Tag => Ev.data.scalar.plain_implicit /= 0,
-							Quoted_Implicit_Tag =>
-								Ev.data.scalar.quoted_implicit /= 0,
+							Quoted_Implicit_Tag => Ev.data.scalar.quoted_implicit /= 0,
 							Scalar_Style =>
 								Scalar_Style'Enum_Val (
-									C.yaml.yaml_scalar_style_t'Enum_Rep (
-										Ev.data.scalar.style)));
+									C.yaml.yaml_scalar_style_t'Enum_Rep (Ev.data.scalar.style)));
 				end;
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_SEQUENCE_START_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : aliased String (
-						1 ..
-						Length (To_char_const_ptr (Ev.data.sequence_start.anchor)));
+					Anchor_S : aliased
+						String (1 .. Length (To_char_const_ptr (Ev.data.sequence_start.anchor)));
 					for Anchor_S'Address use
-						To_Address (
-							To_char_const_ptr (Ev.data.sequence_start.anchor));
+						To_Address (To_char_const_ptr (Ev.data.sequence_start.anchor));
 					Anchor_A : constant String_Access :=
 						Copy_String_Access (
 							Anchor_S'Unrestricted_Access,
 							Parsed_Data.Anchor_Constraint'Access);
 					-- tag
-					Tag_S : aliased String (
-						1 ..
-						Length (To_char_const_ptr (Ev.data.sequence_start.tag)));
+					Tag_S : aliased
+						String (1 .. Length (To_char_const_ptr (Ev.data.sequence_start.tag)));
 					for Tag_S'Address use
 						To_Address (To_char_const_ptr (Ev.data.sequence_start.tag));
 					Tag_A : constant String_Access :=
@@ -437,8 +398,7 @@ package body YAML is
 							Implicit_Tag => Ev.data.sequence_start.implicit /= 0,
 							Sequence_Style =>
 								Sequence_Style'Enum_Val (
-									C.yaml.yaml_sequence_style_t'Enum_Rep (
-										Ev.data.sequence_start.style)));
+									C.yaml.yaml_sequence_style_t'Enum_Rep (Ev.data.sequence_start.style)));
 				end;
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_SEQUENCE_END_EVENT =>
@@ -447,20 +407,17 @@ package body YAML is
 			when C.yaml.YAML_MAPPING_START_EVENT =>
 				declare
 					-- anchor
-					Anchor_S : aliased String (
-						1 ..
-						Length (To_char_const_ptr (Ev.data.mapping_start.anchor)));
+					Anchor_S : aliased
+						String (1 .. Length (To_char_const_ptr (Ev.data.mapping_start.anchor)));
 					for Anchor_S'Address use
-						To_Address (
-							To_char_const_ptr (Ev.data.mapping_start.anchor));
+						To_Address (To_char_const_ptr (Ev.data.mapping_start.anchor));
 					Anchor_A : constant String_Access :=
 						Copy_String_Access (
 							Anchor_S'Unrestricted_Access,
 							Parsed_Data.Anchor_Constraint'Access);
 					-- tag
-					Tag_S : aliased String (
-						1 ..
-						Length (To_char_const_ptr (Ev.data.mapping_start.tag)));
+					Tag_S : aliased
+						String (1 .. Length (To_char_const_ptr (Ev.data.mapping_start.tag)));
 					for Tag_S'Address use
 						To_Address (To_char_const_ptr (Ev.data.mapping_start.tag));
 					Tag_A : constant String_Access :=
@@ -476,8 +433,7 @@ package body YAML is
 							Implicit_Tag => Ev.data.mapping_start.implicit /= 0,
 							Mapping_Style =>
 								Mapping_Style'Enum_Val (
-									C.yaml.yaml_mapping_style_t'Enum_Rep (
-										Ev.data.mapping_start.style)));
+									C.yaml.yaml_mapping_style_t'Enum_Rep (Ev.data.mapping_start.style)));
 				end;
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_MAPPING_END_EVENT =>
@@ -489,9 +445,7 @@ package body YAML is
 	-- implementation
 	
 	function Create (
-		Input : not null access procedure (
-			Item : out String;
-			Last : out Natural))
+		Input : not null access procedure (Item : out String; Last : out Natural))
 		return Parser
 	is
 		type I is access procedure (Item : out String; Last : out Natural);
@@ -546,8 +500,7 @@ package body YAML is
 			when Stream_Start =>
 				if C.yaml.yaml_stream_start_event_initialize (
 					Ev'Access,
-					C.yaml.yaml_encoding_t'Enum_Val (
-						YAML.Encoding'Enum_Rep (Event.Encoding))) = 0
+					C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Event.Encoding))) = 0
 				then
 					raise Storage_Error; -- maybe ...
 				end if;
@@ -568,28 +521,20 @@ package body YAML is
 					if Event.Version_Directive = null then
 						Version_Directive := null;
 					else
-						VD_Body.major :=
-							C.signed_int (Event.Version_Directive.Major);
-						VD_Body.major :=
-							C.signed_int (Event.Version_Directive.Minor);
+						VD_Body.major := C.signed_int (Event.Version_Directive.Major);
+						VD_Body.major := C.signed_int (Event.Version_Directive.Minor);
 						Version_Directive := VD_Body'Unchecked_Access;
 					end if;
-					if Event.Tag_Directives = null
-						or else Event.Tag_Directives'Length = 0
-					then
+					if Event.Tag_Directives = null or else Event.Tag_Directives'Length = 0 then
 						Tag_Directives_Start := null;
 						Tag_Directives_End := null;
 					else
 						TD_Length := Event.Tag_Directives'Length;
-						TD_Body :=
-							new yaml_tag_directive_t_array (
-								0 ..
-								TD_Length + 1); -- extra +1
+						TD_Body := new yaml_tag_directive_t_array (0 .. TD_Length + 1); -- extra +1
 						for I in 0 .. TD_Length - 1 loop
 							declare
 								Item : Tag_Directive
-									renames Event.Tag_Directives (
-										Event.Tag_Directives'First + Integer (I));
+									renames Event.Tag_Directives (Event.Tag_Directives'First + Integer (I));
 							begin
 								TD_Body (I).handle := strdup (Item.Handle);
 								TD_Body (I).prefix := strdup (Item.Prefix);
@@ -607,10 +552,8 @@ package body YAML is
 							Boolean'Pos (Event.Implicit_Indicator)) = 0;
 					if Tag_Directives_Start /= null then
 						for I in 0 .. TD_Length - 1 loop
-							C.stdlib.free (
-								C.void_ptr (TD_Body (I).handle.all'Address));
-							C.stdlib.free (
-								C.void_ptr (TD_Body (I).prefix.all'Address));
+							C.stdlib.free (C.void_ptr (TD_Body (I).handle.all'Address));
+							C.stdlib.free (C.void_ptr (TD_Body (I).prefix.all'Address));
 						end loop;
 						Free (TD_Body);
 					end if;
@@ -631,8 +574,7 @@ package body YAML is
 					Error : Boolean;
 				begin
 					Anchor := strdup (Event.Anchor);
-					Error :=
-						C.yaml.yaml_alias_event_initialize (Ev'Access, Anchor) = 0;
+					Error := C.yaml.yaml_alias_event_initialize (Ev'Access, Anchor) = 0;
 					if Anchor /= null then
 						C.stdlib.free (C.void_ptr (Anchor.all'Address));
 					end if;
@@ -646,10 +588,9 @@ package body YAML is
 					Tag : C.yaml.yaml_char_t_ptr;
 					Ada_Value : String renames Event.Value.all;
 					Length : constant C.signed_int := Ada_Value'Length;
-					C_Value : array (
-							0 ..
-							C.size_t (C.signed_int'Max (Length - 1, 0))) of
-						aliased C.yaml.yaml_char_t;
+					C_Value :
+						array (0 .. C.size_t (C.signed_int'Max (Length - 1, 0))) of aliased
+							C.yaml.yaml_char_t;
 					for C_Value'Address use Ada_Value'Address;
 					Error : Boolean;
 				begin
@@ -774,10 +715,7 @@ package body YAML is
 		Parsed_Data : Parsed_Data_Type;
 	begin
 		Parse (Object, Parsed_Data);
-		Process (
-			Parsed_Data.Event,
-			Parsed_Data.Start_Mark,
-			Parsed_Data.End_Mark);
+		Process (Parsed_Data.Event, Parsed_Data.Start_Mark, Parsed_Data.End_Mark);
 		Parsed_Data.Delete (Parsed_Data);
 	end Parse;
 	

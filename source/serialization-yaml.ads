@@ -4,8 +4,7 @@ package Serialization.YAML is
 	pragma Preelaborate;
 	
 	type Reference_Type (
-		Serializer : not null access Serialization.Serializer) is
-		limited private;
+		Serializer : not null access Serialization.Serializer) is limited private;
 	
 	function Reading (
 		Parser : not null access Standard.YAML.Parser;
@@ -19,13 +18,14 @@ package Serialization.YAML is
 	
 private
 	
-	type Reader is limited new Serialization.Reader with record
-		Parser : not null access Standard.YAML.Parser;
-		Next_Kind : Stream_Element_Kind;
-		Next_Name : Ada.Strings.Unbounded.String_Access;
-		Next_Value : Ada.Strings.Unbounded.String_Access;
-		Level : Natural;
-	end record;
+	type Reader is limited new Serialization.Reader
+		with record
+			Parser : not null access Standard.YAML.Parser;
+			Next_Kind : Stream_Element_Kind;
+			Next_Name : Ada.Strings.Unbounded.String_Access;
+			Next_Value : Ada.Strings.Unbounded.String_Access;
+			Level : Natural;
+		end record;
 	
 	overriding function Next_Kind (Object : not null access Reader)
 		return Stream_Element_Kind;
@@ -37,11 +37,12 @@ private
 		Object : not null access Reader;
 		Position : in State);
 	
-	type Writer is limited new Serialization.Writer with record
-		Emitter : not null access Standard.YAML.Emitter;
-		Tag : Ada.Strings.Unbounded.String_Access;
-		Level : Natural;
-	end record;
+	type Writer is limited new Serialization.Writer
+		with record
+			Emitter : not null access Standard.YAML.Emitter;
+			Tag : Ada.Strings.Unbounded.String_Access;
+			Level : Natural;
+		end record;
 	
 	overriding procedure Put (
 		Object : not null access Writer;
@@ -60,13 +61,14 @@ private
 	type Reader_Access is access Reader;
 	type Writer_Access is access Writer;
 	
-	type Reference_Type (Serializer : not null access Serializer) is
-		limited new Ada.Finalization.Limited_Controlled with
-	record
-		Serializer_Body : Serializer_Access;
-		Reader_Body : Reader_Access;
-		Writer_Body : Writer_Access;
-	end record;
+	type Reference_Type (
+		Serializer : not null access Serializer) is
+		limited new Ada.Finalization.Limited_Controlled
+		with record
+			Serializer_Body : Serializer_Access;
+			Reader_Body : Reader_Access;
+			Writer_Body : Writer_Access;
+		end record;
 	
 	overriding procedure Finalize (Object : in out Reference_Type);
 	

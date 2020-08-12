@@ -143,12 +143,10 @@ begin
 	declare
 		File : Ada.Streams.Stream_IO.File_Type;
 	begin
-		Ada.Streams.Stream_IO.Create (
-			File,
-			Name => Test_File_Name);
+		Ada.Streams.Stream_IO.Create (File, Name => Test_File_Name);
 		declare
-			W : YAML.Emitter := YAML.Streams.Create (
-				Ada.Streams.Stream_IO.Stream (File));
+			W : YAML.Emitter :=
+				YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 		begin
 			Ada.Text_IO.Put ("Writing...");
 			for I in Data'Range loop
@@ -163,13 +161,11 @@ begin
 	declare
 		File : Ada.Streams.Stream_IO.File_Type;
 	begin
-		Ada.Streams.Stream_IO.Open (
-			File,
-			Ada.Streams.Stream_IO.In_File,
+		Ada.Streams.Stream_IO.Open (File, Ada.Streams.Stream_IO.In_File,
 			Name => Test_File_Name);
 		declare
-			R : YAML.Parser := YAML.Streams.Create (
-				Ada.Streams.Stream_IO.Stream (File));
+			R : YAML.Parser :=
+				YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 		begin
 			Ada.Text_IO.Put ("Reading...");
 			for I in Data'Range loop

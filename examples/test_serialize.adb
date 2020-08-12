@@ -64,8 +64,9 @@ procedure test_serialize is
 	end IO;
 	Root_Tag : constant String := "ROOT-TAG";
 	Data : T := (
-		X => Ada.Strings.Unbounded.To_Unbounded_String (
-			Mapping_Method_Type'Image (Mapping_Method)),
+		X =>
+			Ada.Strings.Unbounded.To_Unbounded_String (
+				Mapping_Method_Type'Image (Mapping_Method)),
 		Y => True,
 		Z => (A => 100));
 begin
@@ -80,12 +81,10 @@ begin
 	declare
 		File : Ada.Streams.Stream_IO.File_Type;
 	begin
-		Ada.Streams.Stream_IO.Create (
-			File,
-			Name => Test_File_Name);
+		Ada.Streams.Stream_IO.Create (File, Name => Test_File_Name);
 		declare
-			W : aliased YAML.Emitter := YAML.Streams.Create (
-				Ada.Streams.Stream_IO.Stream (File));
+			W : aliased YAML.Emitter :=
+				YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 		begin
 			Ada.Text_IO.Put ("Writing...");
 			YAML.Emit (W, (Event_Type => YAML.Stream_Start, Encoding => YAML.Any));
@@ -103,13 +102,11 @@ begin
 			Y => False,
 			Z => (A => 0));
 	begin
-		Ada.Streams.Stream_IO.Open (
-			File,
-			Ada.Streams.Stream_IO.In_File,
+		Ada.Streams.Stream_IO.Open (File, Ada.Streams.Stream_IO.In_File,
 			Name => Test_File_Name);
 		declare
-			R : aliased YAML.Parser := YAML.Streams.Create (
-				Ada.Streams.Stream_IO.Stream (File));
+			R : aliased YAML.Parser :=
+				YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 		begin
 			Ada.Text_IO.Put ("Reading...");
 			YAML.Parse_Stream_Start (R);

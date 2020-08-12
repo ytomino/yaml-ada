@@ -42,7 +42,7 @@ package Serialization is
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
-			Value : in out Custom_Type); 
+			Value : in out Custom_Type);
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
@@ -56,7 +56,7 @@ package Serialization is
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
-			Value : in out Enumeration_Type); 
+			Value : in out Enumeration_Type);
 		procedure IO (
 			Object : not null access Serializer;
 			Name : in String;
@@ -163,8 +163,8 @@ package Serialization is
 		type Cursor is private;
 		type Element_Type is private;
 		type Container_Type is limited private;
-		type Reference_Type (Element : not null access Element_Type) is
-			limited private;
+		type Reference_Type (
+			Element : not null access Element_Type) is limited private;
 		Default : in Element_Type;
 		with function Has_Element (Position : Cursor) return Boolean is <>;
 		with function First (Container : Container_Type) return Cursor is <>;
@@ -239,8 +239,7 @@ package Serialization is
 		with procedure Update_Element (
 			Container : in out Container_Type;
 			Position : in Cursor;
-			Process : not null access procedure (
-				Element : in out Element_Type)) is <>;
+			Process : not null access procedure (Element : in out Element_Type)) is <>;
 		with procedure Append (
 			Container : in out Container_Type;
 			New_Item : in Element_Type;
@@ -266,8 +265,8 @@ package Serialization is
 		type Cursor is private;
 		type Element_Type is private;
 		type Container_Type is limited private;
-		type Reference_Type (Element : not null access Element_Type) is
-			limited private;
+		type Reference_Type (
+			Element : not null access Element_Type) is limited private;
 		Default : in Element_Type;
 		with function Last (Container : Container_Type) return Cursor is <>;
 		with function Has_Element (Position : Cursor) return Boolean is <>;
@@ -311,8 +310,7 @@ package Serialization is
 			Process : not null access procedure (Position : in Cursor)) is <>;
 		with procedure Query_Element (
 			Position : in Cursor;
-			Process : not null access procedure (
-				Element : in Element_Type)) is <>;
+			Process : not null access procedure (Element : in Element_Type)) is <>;
 		with procedure Insert (
 			Container : in out Container_Type;
 			New_Item : in Element_Type;
@@ -422,12 +420,11 @@ private
 	
 	type Cursor is new Boolean;
 	
-	type Mapping_Iterator is
-		new Mapping_Iterator_Interfaces.Forward_Iterator with
-	record
-		Serializer : not null access Serialization.Serializer;
-		Entry_Presence : Boolean;
-	end record;
+	type Mapping_Iterator is new Mapping_Iterator_Interfaces.Forward_Iterator
+		with record
+			Serializer : not null access Serialization.Serializer;
+			Entry_Presence : Boolean;
+		end record;
 	
 	overriding function First (Object : Mapping_Iterator) return Cursor;
 	overriding function Next (Object : Mapping_Iterator; Position : Cursor)
