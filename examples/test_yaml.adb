@@ -89,8 +89,11 @@ procedure test_yaml is
 		end if;
 	end "=";
 	Test_File_Name : constant String := "test_yaml.yaml";
-	Data : constant array (Positive range <>) of
-		not null access constant YAML.Event := (
+	type Event_Constant is access constant YAML.Event;
+	The_Tag_1 : aliased constant String := "!TEST";
+	The_Value_1 : aliased constant String := "Hello";
+	The_Value_2 : aliased constant String := "YAML";
+	Data : constant array (Positive range <>) of not null Event_Constant := (
 		new YAML.Event'(
 			Event_Type => YAML.Stream_Start,
 			Encoding => YAML.UTF_8),
@@ -102,14 +105,14 @@ procedure test_yaml is
 		new YAML.Event'(
 			Event_Type => YAML.Mapping_Start,
 			Anchor => null,
-			Tag => new String'("!TEST"),
+			Tag => The_Tag_1'Unchecked_Access,
 			Implicit_Tag => False,
 			Mapping_Style => YAML.Block),
 		new YAML.Event'(
 			Event_Type => YAML.Scalar,
 			Anchor => null,
 			Tag => null,
-			Value => new String'("Hello"),
+			Value => The_Value_1'Unchecked_Access,
 			Plain_Implicit_Tag => True,
 			Quoted_Implicit_Tag => False,
 			Scalar_Style => YAML.Plain),
@@ -117,7 +120,7 @@ procedure test_yaml is
 			Event_Type => YAML.Scalar,
 			Anchor => null,
 			Tag => null,
-			Value => new String'("YAML"),
+			Value => The_Value_2'Unchecked_Access,
 			Plain_Implicit_Tag => True,
 			Quoted_Implicit_Tag => False,
 			Scalar_Style => YAML.Plain),
