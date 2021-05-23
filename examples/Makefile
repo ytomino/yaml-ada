@@ -26,7 +26,7 @@ HFLAGS=
 ifeq ($(TARGET),$(HOST))
 LFLAGS:=$(shell pkg-config --libs yaml-0.1)
 YAML_INCDIR:=$(shell pkg-config --variable=includedir yaml-0.1)
-HFLAGS=-I$(YAML_INCDIR)
+HFLAGS+=$(addprefix -I,$(YAML_INCDIR))
 endif
 
 ifneq ($(DRAKE_RTSROOT),)
