@@ -172,7 +172,8 @@ package body YAML is
 	is
 		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
 			Controlled_Parsers.Reference (Object);
-		Ev : aliased C.yaml.yaml_event_t := (others => <>);
+		Ev : aliased C.yaml.yaml_event_t;
+		pragma Suppress_Initialization (Ev);
 		T : C.yaml.yaml_event_type_t;
 	begin
 		if C.yaml.yaml_parser_parse (Raw_Object, Ev'Access) = 0 then
@@ -492,7 +493,8 @@ package body YAML is
 	procedure Emit (Object : in out Emitter; Event : in YAML.Event) is
 		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
 			Controlled_Emitters.Reference (Object);
-		Ev : aliased C.yaml.yaml_event_t := (others => <>);
+		Ev : aliased C.yaml.yaml_event_t;
+		pragma Suppress_Initialization (Ev);
 	begin
 		case Event.Event_Type is
 			when No_Event =>
