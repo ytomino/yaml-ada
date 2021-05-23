@@ -6,10 +6,12 @@ What's this?
 
 Ada binding to libyaml.
 
-Depending tools and libraries
------------------------------
+Prerequisites
+-------------
 
-libyaml
+GCC >= 5
+ https://gcc.gnu.org/
+libyaml >= 0.1.7
  http://pyyaml.org/wiki/LibYAML
 headmaster
  http://github.com/ytomino/headmaster
