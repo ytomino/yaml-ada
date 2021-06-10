@@ -1,4 +1,5 @@
 /bin
+/import
 /test_yaml.yaml
 /test_serialize.yaml
 /*.adc
