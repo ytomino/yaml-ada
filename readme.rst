@@ -19,16 +19,37 @@ headmaster
 Usage
 -----
 
-1. Translate the C headers with headmaster. ::
-   
-    $ headmaster --to ada -p -D import-dir yaml-ada/source/import.h
+1. Prepare the translated headers.
+
+   A. Translate the C headers with headmaster. ::
+
+       $ headmaster --to ada -p -D import-dir yaml-ada/source/import.h
+      
+      However, it may not work well in your environment.
+      The plan B is recommended.
+
+   B. Download them from `pre-translated headers page`_.
 
 2. Add the source directories of yaml-ada and the translated headers
    to search path for gnatmake. ::
-   
+
     $ gnatmake -Iyaml-ada/source -Iimport-dir your_main.adb
    
    Or please write .gpr file for your environment.
+
+Build examples
+--------------
+
+1. Link the translated headers to `examples/import`. ::
+
+    $ mkdir -p examples/import/$(gcc -dumpmachine)
+    $ ln -s import-dir examples/import/$(gcc -dumpmachine)
+   
+   If this step is omitted, headmaster will be used.
+
+2. Build them. ::
+
+    $ make -C examples
 
 License
 -------
@@ -103,3 +124,5 @@ I recommend the MIT License that is same as libyaml.
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
+
+.. _`pre-translated headers page`: https://github.com/ytomino/yaml-ada/wiki/Pre-translated-headers
