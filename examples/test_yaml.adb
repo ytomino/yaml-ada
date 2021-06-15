@@ -1,7 +1,21 @@
+with Ada.Command_Line;
 with Ada.Streams.Stream_IO;
 with Ada.Text_IO;
 with YAML.Streams;
 procedure test_yaml is
+	Verbose : Boolean := False;
+	procedure Put (Item : in String) is
+	begin
+		if Verbose then
+			Ada.Text_IO.Put (Item);
+		end if;
+	end Put;
+	procedure New_Line is
+	begin
+		if Verbose then
+			Ada.Text_IO.New_Line;
+		end if;
+	end New_Line;
 	function "=" (Left, Right : YAML.Event) return Boolean is
 		use YAML;
 	begin
@@ -132,8 +146,23 @@ procedure test_yaml is
 		new YAML.Event'(
 			Event_Type => YAML.Stream_End));
 begin
+	-- options
+	for I in 1 .. Ada.Command_Line.Argument_Count loop
+		declare
+			A : constant String := Ada.Command_Line.Argument (I);
+		begin
+			if A = "--verbose" then
+				Verbose := True;
+			else
+				Ada.Text_IO.Put_Line (Ada.Text_IO.Standard_Error.all, "unknown option: " & A);
+				Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+				return;
+			end if;
+		end;
+	end loop;
+	-- emitter
 	declare
-		W : YAML.Emitter := YAML.Create (Ada.Text_IO.Put'Access);
+		W : YAML.Emitter := YAML.Create (Put'Access);
 	begin
 		for I in Data'Range loop
 			YAML.Emit (W, Data (I).all);
@@ -148,16 +177,18 @@ begin
 			W : YAML.Emitter :=
 				YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 		begin
-			Ada.Text_IO.Put ("Writing...");
+			Put ("Writing...");
 			for I in Data'Range loop
-				Ada.Text_IO.Put (I'Img);
+				Put (I'Img);
 				YAML.Emit (W, Data (I).all);
 			end loop;
 			YAML.Flush (W);
-			Ada.Text_IO.Put_Line (" ok");
+			Put (" ok");
+			New_Line;
 		end;
 		Ada.Streams.Stream_IO.Close (File);
 	end;
+	-- parser
 	declare
 		File : Ada.Streams.Stream_IO.File_Type;
 	begin
@@ -167,9 +198,9 @@ begin
 			R : YAML.Parser :=
 				YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 		begin
-			Ada.Text_IO.Put ("Reading...");
+			Put ("Reading...");
 			for I in Data'Range loop
-				Ada.Text_IO.Put (I'Img);
+				Put (I'Img);
 				declare
 					procedure Process (
 						Event : in YAML.Event;
@@ -186,8 +217,11 @@ begin
 					YAML.Parse (R, Process'Access);
 				end;
 			end loop;
-			Ada.Text_IO.Put_Line (" ok");
+			Put (" ok");
+			New_Line;
 		end;
 		Ada.Streams.Stream_IO.Close (File);
 	end;
+	-- finish
+	Ada.Text_IO.Put_Line (Ada.Text_IO.Standard_Error.all, "ok");
 end test_yaml;
