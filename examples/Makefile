@@ -85,4 +85,3 @@ endif
 
 clean:
 	-rm -rf *.noindex bin
-	-rm test_yaml.yaml test_serialize.yaml

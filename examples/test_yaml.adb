@@ -1,4 +1,6 @@
 with Ada.Command_Line;
+with Ada.Directories;
+with Ada.Environment_Variables;
 with Ada.Streams.Stream_IO;
 with Ada.Text_IO;
 with YAML.Streams;
@@ -102,7 +104,10 @@ procedure test_yaml is
 			end case;
 		end if;
 	end "=";
-	Test_File_Name : constant String := "test_yaml.yaml";
+	Test_File_Name : constant String :=
+		Ada.Directories.Compose (
+			Ada.Environment_Variables.Value ("TMPDIR", Default => "/tmp"),
+			"test_yaml.yaml");
 	type Event_Constant is access constant YAML.Event;
 	The_Tag_1 : aliased constant String := "!TEST";
 	The_Value_1 : aliased constant String := "Hello";

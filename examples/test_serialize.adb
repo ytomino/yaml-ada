@@ -1,4 +1,6 @@
 with Ada.Command_Line;
+with Ada.Directories;
+with Ada.Environment_Variables;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
@@ -18,7 +20,10 @@ procedure test_serialize is
 			Ada.Text_IO.New_Line;
 		end if;
 	end New_Line;
-	Test_File_Name : constant String := "test_serialize.yaml";
+	Test_File_Name : constant String :=
+		Ada.Directories.Compose (
+			Ada.Environment_Variables.Value ("TMPDIR", Default => "/tmp"),
+			"test_serialize.yaml");
 	type Mapping_Method_Type is (By_Closure, By_Iterator);
 	type Nested_Map is record
 		A : Integer;
