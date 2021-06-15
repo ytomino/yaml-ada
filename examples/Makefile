@@ -84,4 +84,4 @@ $(IMPORTDIR): $(SOURCEDIR)/import.h
 endif
 
 clean:
-	-rm -rf *.noindex bin
+	-rm -r *.noindex bin
