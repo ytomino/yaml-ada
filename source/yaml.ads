@@ -164,11 +164,11 @@ package YAML is
 		Element : not null access constant Mark) is null record
 		with Implicit_Dereference => Element;
 	
-	function Value (Parsing_Entry : Parsing_Entry_Type)
+	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Event_Reference_Type;
-	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
+	function Start_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type;
-	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
+	function End_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type;
 	
 	pragma Inline (Value);

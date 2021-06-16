@@ -95,7 +95,7 @@ package body Serialization.YAML is
 		Object : not null access Reader;
 		Tag : in String)
 	is
-		Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+		Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 	begin
 		Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
 		declare
@@ -197,7 +197,7 @@ package body Serialization.YAML is
 		Free_And_Null (Object.Next_Name);
 		if Position = In_Mapping then
 			declare
-				Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+				Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 			begin
 				Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
 				declare
@@ -216,7 +216,7 @@ package body Serialization.YAML is
 		end if;
 --	<<Process_Value>>
 		declare
-			Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+			Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 		begin
 			Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
 			Handle (Object, Standard.YAML.Value (Parsing_Entry).Element.all);

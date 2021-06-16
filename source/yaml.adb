@@ -472,25 +472,22 @@ package body YAML is
 		Parsed_Data.Delete (Parsed_Data);
 	end Parse;
 	
-	function Value (Parsing_Entry : Parsing_Entry_Type)
+	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Event_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.Event'Unrestricted_Access);
-			-- [gcc-6] wrongly detected as dangling
+		return (Element => Parsing_Entry.Data.Event'Access);
 	end Value;
 	
-	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
+	function Start_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.Start_Mark'Unrestricted_Access);
-			-- [gcc-6] wrongly detected as dangling
+		return (Element => Parsing_Entry.Data.Start_Mark'Access);
 	end Start_Mark;
 	
-	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
+	function End_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.End_Mark'Unrestricted_Access);
-			-- [gcc-6] wrongly detected as dangling
+		return (Element => Parsing_Entry.Data.End_Mark'Access);
 	end End_Mark;
 	
 	procedure Parse (
