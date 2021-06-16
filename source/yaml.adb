@@ -866,6 +866,29 @@ package body YAML is
 		end if;
 	end Put;
 	
+	procedure Put_Document_Start (
+		Object : in out Emitter;
+		Implicit_Indicator : in Boolean := False;
+		Version_Directive : access constant YAML.Version_Directive := null;
+		Tag_Directives : access constant YAML.Tag_Directive_Array := null) is
+	begin
+		Put (
+			Object,
+			(Event_Type => Document_Start,
+				Implicit_Indicator => Implicit_Indicator,
+				Version_Directive => Version_Directive,
+				Tag_Directives => Tag_Directives));
+	end Put_Document_Start;
+	
+	procedure Put_Document_End (
+		Object : in out Emitter;
+		Implicit_Indicator : in Boolean := True) is
+	begin
+		Put (
+			Object,
+			(Event_Type => Document_End, Implicit_Indicator => Implicit_Indicator));
+	end Put_Document_End;
+	
 	-- private implementation of emitter
 	
 	package body Controlled_Emitters is

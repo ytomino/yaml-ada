@@ -204,6 +204,15 @@ package YAML is
 	
 	procedure Put (Object : in out Emitter; Event : in YAML.Event);
 	
+	procedure Put_Document_Start (
+		Object : in out Emitter;
+		Implicit_Indicator : in Boolean := False;
+		Version_Directive : access constant YAML.Version_Directive := null;
+		Tag_Directives : access constant YAML.Tag_Directive_Array := null);
+	procedure Put_Document_End (
+		Object : in out Emitter;
+		Implicit_Indicator : in Boolean := True);
+	
 	-- exceptions
 	
 	Status_Error : exception

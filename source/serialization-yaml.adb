@@ -238,13 +238,6 @@ package body Serialization.YAML is
 				Scalar_Style => Standard.YAML.Any));
 	end Emit_Name;
 	
-	procedure Emit_Document_End (Object : not null access Writer) is
-	begin
-		Standard.YAML.Put (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Document_End, Implicit_Indicator => True));
-	end Emit_Document_End;
-	
 	-- implementation of writing
 	
 	function Writing (
@@ -275,12 +268,7 @@ package body Serialization.YAML is
 		do
 			pragma Unreferenced (Result);
 			In_Controlled := True;
-			Standard.YAML.Put (
-				Emitter.all,
-				(Event_Type => Standard.YAML.Document_Start,
-					Implicit_Indicator => False,
-					Version_Directive => null,
-					Tag_Directives => null));
+			Standard.YAML.Put_Document_Start (Emitter.all);
 		end return;
 	exception
 		when others =>
@@ -330,7 +318,7 @@ package body Serialization.YAML is
 			Ada.Strings.Unbounded.Free (Tag);
 		end if;
 		if Object.Level = 0 then
-			Emit_Document_End (Object);
+			Standard.YAML.Put_Document_End (Object.Emitter.all);
 		end if;
 	end Put;
 	
@@ -376,7 +364,7 @@ package body Serialization.YAML is
 			(Event_Type => Standard.YAML.Mapping_End));
 		Object.Level := Object.Level - 1;
 		if Object.Level = 0 then
-			Emit_Document_End (Object);
+			Standard.YAML.Put_Document_End (Object.Emitter.all);
 		end if;
 	end Leave_Mapping;
 	
@@ -422,7 +410,7 @@ package body Serialization.YAML is
 			(Event_Type => Standard.YAML.Sequence_End));
 		Object.Level := Object.Level - 1;
 		if Object.Level = 0 then
-			Emit_Document_End (Object);
+			Standard.YAML.Put_Document_End (Object.Emitter.all);
 		end if;
 	end Leave_Sequence;
 	
