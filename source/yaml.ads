@@ -136,6 +136,8 @@ package YAML is
 	Default_Mapping_Tag : String
 		renames Mapping_Tag;
 	
+	-- parser
+	
 	type Parser (<>) is limited private;
 	
 	function Create (
@@ -151,11 +153,6 @@ package YAML is
 		Process : not null access procedure (
 			Event : in YAML.Event;
 			Start_Mark, End_Mark : in Mark));
-	
-	procedure Parse_Stream_Start (Object : in out Parser);
-	procedure Parse_Stream_End (Object : in out Parser);
-	procedure Parse_Document_Start (Object : in out Parser);
-	procedure Parse_Document_End (Object : in out Parser);
 	
 	type Parsing_Entry_Type is limited private;
 	pragma Preelaborable_Initialization (Parsing_Entry_Type);
@@ -182,10 +179,19 @@ package YAML is
 		Object : in out Parser;
 		Parsing_Entry : out Parsing_Entry_Type);
 	
+	procedure Parse_Document_Start (Object : in out Parser);
+	procedure Parse_Document_End (Object : in out Parser);
+	procedure Parse_Stream_Start (Object : in out Parser);
+	procedure Parse_Stream_End (Object : in out Parser);
+	
+	-- emitter
+	
 	type Emitter (<>) is limited private;
 	
 	function Create (Output : not null access procedure (Item : in String))
 		return Emitter;
+	
+	procedure Flush (Object : in out Emitter);
 	
 	procedure Set_Encoding (
 		Object : in out Emitter;
@@ -198,7 +204,7 @@ package YAML is
 	
 	procedure Emit (Object : in out Emitter; Event : in YAML.Event);
 	
-	procedure Flush (Object : in out Emitter);
+	-- exceptions
 	
 	Status_Error : exception
 		renames Ada.IO_Exceptions.Status_Error;
@@ -250,6 +256,8 @@ private
 			C.yaml.yaml_mapping_style_t'Enum_Rep (C.yaml.YAML_BLOCK_MAPPING_STYLE),
 		Flow =>
 			C.yaml.yaml_mapping_style_t'Enum_Rep (C.yaml.YAML_FLOW_MAPPING_STYLE));
+	
+	-- parser
 	
 	type String_Constraint is record
 		First : Positive;
@@ -303,6 +311,8 @@ private
 	
 	type Parser is new Controlled_Parsers.Parser;
 	
+	-- emitter
+	
 	package Controlled_Emitters is
 		
 		type Emitter is limited private;
@@ -329,6 +339,8 @@ private
 	end Controlled_Emitters;
 	
 	type Emitter is new Controlled_Emitters.Emitter;
+	
+	-- exceptions
 	
 	procedure Raise_Error (
 		Error : in C.yaml.yaml_error_type_t;

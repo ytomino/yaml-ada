@@ -18,6 +18,26 @@ package Serialization.YAML is
 	
 private
 	
+	type Serializer_Access is access Serializer;
+	
+	type Reader;
+	type Reader_Access is access Reader;
+	type Writer;
+	type Writer_Access is access Writer;
+	
+	type Reference_Type (
+		Serializer : not null access Serializer) is
+		limited new Ada.Finalization.Limited_Controlled
+		with record
+			Serializer_Body : Serializer_Access;
+			Reader_Body : Reader_Access;
+			Writer_Body : Writer_Access;
+		end record;
+	
+	overriding procedure Finalize (Object : in out Reference_Type);
+	
+	-- reading
+	
 	type Reader is limited new Serialization.Reader
 		with record
 			Parser : not null access Standard.YAML.Parser;
@@ -36,6 +56,8 @@ private
 	overriding procedure Advance (
 		Object : not null access Reader;
 		Position : in State);
+	
+	-- writing
 	
 	type Writer is limited new Serialization.Writer
 		with record
@@ -56,20 +78,5 @@ private
 		Object : not null access Writer;
 		Name : in String);
 	overriding procedure Leave_Sequence (Object : not null access Writer);
-	
-	type Serializer_Access is access Serializer;
-	type Reader_Access is access Reader;
-	type Writer_Access is access Writer;
-	
-	type Reference_Type (
-		Serializer : not null access Serializer) is
-		limited new Ada.Finalization.Limited_Controlled
-		with record
-			Serializer_Body : Serializer_Access;
-			Reader_Body : Reader_Access;
-			Writer_Body : Writer_Access;
-		end record;
-	
-	overriding procedure Finalize (Object : in out Reference_Type);
 	
 end Serialization.YAML;

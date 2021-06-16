@@ -16,6 +16,8 @@ package Serialization is
 	
 	type Serializer (Direction : Serialization.Direction) is limited private;
 	
+	-- scalar
+	
 	procedure IO (
 		Object : not null access Serializer;
 		Name : in String;

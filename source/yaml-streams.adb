@@ -3,6 +3,8 @@ with Ada.Unchecked_Conversion;
 package body YAML.Streams is
 	use type C.signed_int;
 	
+	-- parser
+	
 	function Read_Handler (
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
@@ -37,6 +39,30 @@ package body YAML.Streams is
 		return 1;
 	end Read_Handler;
 	
+	-- implementation of parser
+	
+	function Create (
+		Stream : not null access Ada.Streams.Root_Stream_Type'Class)
+		return Parser is
+	begin
+		return Result : Parser do
+			declare
+				Raw_Result : constant not null access C.yaml.yaml_parser_t :=
+					Controlled_Parsers.Reference (Result);
+			begin
+				if C.yaml.yaml_parser_initialize (Raw_Result) = 0 then
+					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
+				end if;
+				C.yaml.yaml_parser_set_input (
+					Raw_Result,
+					Read_Handler'Access,
+					C.void_ptr (Stream.all'Address));
+			end;
+		end return;
+	end Create;
+	
+	-- emitter
+	
 	function Write_Handler (
 		data : C.void_ptr;
 		buffer : access C.unsigned_char;
@@ -62,27 +88,7 @@ package body YAML.Streams is
 		return 1;
 	end Write_Handler;
 	
-	-- implementation
-	
-	function Create (
-		Stream : not null access Ada.Streams.Root_Stream_Type'Class)
-		return Parser is
-	begin
-		return Result : Parser do
-			declare
-				Raw_Result : constant not null access C.yaml.yaml_parser_t :=
-					Controlled_Parsers.Reference (Result);
-			begin
-				if C.yaml.yaml_parser_initialize (Raw_Result) = 0 then
-					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
-				end if;
-				C.yaml.yaml_parser_set_input (
-					Raw_Result,
-					Read_Handler'Access,
-					C.void_ptr (Stream.all'Address));
-			end;
-		end return;
-	end Create;
+	-- implementation of emitter
 	
 	function Create (
 		Stream : not null access Ada.Streams.Root_Stream_Type'Class)

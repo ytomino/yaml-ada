@@ -12,15 +12,6 @@ package body YAML is
 	use type C.yaml.yaml_tag_directive_t_ptr;
 	use type C.yaml.yaml_version_directive_t_ptr;
 	
-	type yaml_tag_directive_t_array is
-		array (C.size_t range <>) of aliased C.yaml.yaml_tag_directive_t;
-	pragma Suppress_Initialization (yaml_tag_directive_t_array);
-	type yaml_tag_directive_t_array_access is access yaml_tag_directive_t_array;
-	procedure Free is
-		new Ada.Unchecked_Deallocation (
-			yaml_tag_directive_t_array,
-			yaml_tag_directive_t_array_access);
-	
 	function strdup (S : access constant String)
 		return C.yaml.yaml_char_t_ptr is
 	begin
@@ -110,12 +101,35 @@ package body YAML is
 		return Result;
 	end Copy_String_Access;
 	
+	type String_Constant_Access is access constant String;
+	function Remove_Constant is
+		new Ada.Unchecked_Conversion (String_Constant_Access, String_Access);
+	
+	-- implementation
+	
+	function Version return String is
+		P : constant C.char_const_ptr := C.yaml.yaml_get_version_string;
+		S : String (1 .. Length (P));
+		for S'Address use To_Address (P);
+	begin
+		return S;
+	end Version;
+	
+	-- parser
+	
 	type Version_Directive_Access is access all Version_Directive;
 	
 	type Tag_Directive_Array_Access is access Tag_Directive_Array;
 	procedure Free is
 		new Ada.Unchecked_Deallocation (
 			Tag_Directive_Array,
+			Tag_Directive_Array_Access);
+	
+	type Tag_Directive_Array_Constant_Access is
+		access constant Tag_Directive_Array;
+	function Remove_Constant is
+		new Ada.Unchecked_Conversion (
+			Tag_Directive_Array_Constant_Access,
 			Tag_Directive_Array_Access);
 	
 	function Read_Handler (
@@ -143,61 +157,6 @@ package body YAML is
 		size_read.all := C.size_t (Last);
 		return 1;
 	end Read_Handler;
-	
-	function Write_Handler (
-		data : C.void_ptr;
-		buffer : access C.unsigned_char;
-		size : C.size_t)
-		return C.signed_int
-		with Convention => C;
-	
-	function Write_Handler (
-		data : C.void_ptr;
-		buffer : access C.unsigned_char;
-		size : C.size_t)
-		return C.signed_int
-	is
-		type O is access procedure (Item : in String);
-		function To_Output is new Ada.Unchecked_Conversion (C.void_ptr, O);
-		Ada_Data : String (1 .. Natural (size));
-		for Ada_Data'Address use buffer.all'Address;
-	begin
-		To_Output (data) (Ada_Data);
-		return 1;
-	end Write_Handler;
-	
-	procedure Parse_Expection (
-		Object : in out Parser;
-		Expected : C.yaml.yaml_event_type_t)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
-			Controlled_Parsers.Reference (Object);
-		Ev : aliased C.yaml.yaml_event_t;
-		pragma Suppress_Initialization (Ev);
-		T : C.yaml.yaml_event_type_t;
-	begin
-		if C.yaml.yaml_parser_parse (Raw_Object, Ev'Access) = 0 then
-			Raise_Error (Raw_Object.error, Raw_Object.problem, Raw_Object.mark'Access);
-		end if;
-		T := Ev.F_type;
-		C.yaml.yaml_event_delete (Ev'Access);
-		if T /= Expected then
-			raise Data_Error;
-		end if;
-	end Parse_Expection;
-	
-	-- parsing one event
-	
-	type Tag_Directive_Array_Constant_Access is
-		access constant Tag_Directive_Array;
-	function Remove_Constant is
-		new Ada.Unchecked_Conversion (
-			Tag_Directive_Array_Constant_Access,
-			Tag_Directive_Array_Access);
-	
-	type String_Constant_Access is access constant String;
-	function Remove_Constant is
-		new Ada.Unchecked_Conversion (String_Constant_Access, String_Access);
 	
 	procedure Delete_Event (Parsed_Data : in out Parsed_Data_Type) is
 	begin
@@ -443,7 +402,27 @@ package body YAML is
 		end case;
 	end Parse;
 	
-	-- implementation
+	procedure Parse_Expection (
+		Object : in out Parser;
+		Expected : C.yaml.yaml_event_type_t)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
+			Controlled_Parsers.Reference (Object);
+		Ev : aliased C.yaml.yaml_event_t;
+		pragma Suppress_Initialization (Ev);
+		T : C.yaml.yaml_event_type_t;
+	begin
+		if C.yaml.yaml_parser_parse (Raw_Object, Ev'Access) = 0 then
+			Raise_Error (Raw_Object.error, Raw_Object.problem, Raw_Object.mark'Access);
+		end if;
+		T := Ev.F_type;
+		C.yaml.yaml_event_delete (Ev'Access);
+		if T /= Expected then
+			raise Data_Error;
+		end if;
+	end Parse_Expection;
+	
+	-- implementation of parser
 	
 	function Create (
 		Input : not null access procedure (Item : out String; Last : out Natural))
@@ -468,6 +447,138 @@ package body YAML is
 		end return;
 	end Create;
 	
+	procedure Set_Encoding (
+		Object : in out Parser;
+		Encoding : in YAML.Encoding)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
+			Controlled_Parsers.Reference (Object);
+	begin
+		C.yaml.yaml_parser_set_encoding (
+			Raw_Object,
+			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
+	end Set_Encoding;
+	
+	procedure Parse (
+		Object : in out Parser;
+		Process : not null access procedure (
+			Event : in YAML.Event;
+			Start_Mark, End_Mark : in Mark))
+	is
+		Parsed_Data : Parsed_Data_Type;
+	begin
+		Parse (Object, Parsed_Data);
+		Process (Parsed_Data.Event, Parsed_Data.Start_Mark, Parsed_Data.End_Mark);
+		Parsed_Data.Delete (Parsed_Data);
+	end Parse;
+	
+	function Value (Parsing_Entry : Parsing_Entry_Type)
+		return Event_Reference_Type is
+	begin
+		return (Element => Parsing_Entry.Data.Event'Unrestricted_Access);
+			-- [gcc-6] wrongly detected as dangling
+	end Value;
+	
+	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
+		return Mark_Reference_Type is
+	begin
+		return (Element => Parsing_Entry.Data.Start_Mark'Unrestricted_Access);
+			-- [gcc-6] wrongly detected as dangling
+	end Start_Mark;
+	
+	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
+		return Mark_Reference_Type is
+	begin
+		return (Element => Parsing_Entry.Data.End_Mark'Unrestricted_Access);
+			-- [gcc-6] wrongly detected as dangling
+	end End_Mark;
+	
+	procedure Parse (
+		Object : in out Parser;
+		Parsing_Entry : out Parsing_Entry_Type) is
+	begin
+		Parse (Object, Parsing_Entry.Data);
+	end Parse;
+	
+	procedure Parse_Document_Start (Object : in out Parser) is
+	begin
+		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_START_EVENT);
+	end Parse_Document_Start;
+	
+	procedure Parse_Document_End (Object : in out Parser) is
+	begin
+		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_END_EVENT);
+	end Parse_Document_End;
+	
+	procedure Parse_Stream_Start (Object : in out Parser) is
+	begin
+		Parse_Expection (Object, C.yaml.YAML_STREAM_START_EVENT);
+	end Parse_Stream_Start;
+	
+	procedure Parse_Stream_End (Object : in out Parser) is
+	begin
+		Parse_Expection (Object, C.yaml.YAML_STREAM_END_EVENT);
+	end Parse_Stream_End;
+	
+	-- private implementation of parser
+	
+	overriding procedure Finalize (Object : in out Parsing_Entry_Type) is
+	begin
+		if Object.Data.Delete /= null then
+			Object.Data.Delete (Object.Data);
+		end if;
+	end Finalize;
+	
+	package body Controlled_Parsers is
+		
+		function Reference (Object : in out YAML.Parser)
+			return not null access C.yaml.yaml_parser_t is
+		begin
+			return Parser (Object).Raw.X'Unrestricted_Access;
+		end Reference;
+		
+		overriding procedure Finalize (Object : in out Parser) is
+		begin
+			C.yaml.yaml_parser_delete (Object.Raw.X'Access);
+		end Finalize;
+		
+	end Controlled_Parsers;
+	
+	-- emitter
+	
+	type yaml_tag_directive_t_array is
+		array (C.size_t range <>) of aliased C.yaml.yaml_tag_directive_t;
+	pragma Suppress_Initialization (yaml_tag_directive_t_array);
+	type yaml_tag_directive_t_array_access is access yaml_tag_directive_t_array;
+	procedure Free is
+		new Ada.Unchecked_Deallocation (
+			yaml_tag_directive_t_array,
+			yaml_tag_directive_t_array_access);
+	
+	function Write_Handler (
+		data : C.void_ptr;
+		buffer : access C.unsigned_char;
+		size : C.size_t)
+		return C.signed_int
+		with Convention => C;
+	
+	function Write_Handler (
+		data : C.void_ptr;
+		buffer : access C.unsigned_char;
+		size : C.size_t)
+		return C.signed_int
+	is
+		type O is access procedure (Item : in String);
+		function To_Output is new Ada.Unchecked_Conversion (C.void_ptr, O);
+		Ada_Data : String (1 .. Natural (size));
+		for Ada_Data'Address use buffer.all'Address;
+	begin
+		To_Output (data) (Ada_Data);
+		return 1;
+	end Write_Handler;
+	
+	-- implementation of emitter
+	
 	function Create (Output : not null access procedure (Item : in String))
 		return Emitter
 	is
@@ -489,6 +600,79 @@ package body YAML is
 			end;
 		end return;
 	end Create;
+	
+	procedure Flush (Object : in out Emitter) is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		if C.yaml.yaml_emitter_flush (Raw_Object) = 0 then
+			Raise_Error (Raw_Object.error, Raw_Object.problem, null);
+		end if;
+	end Flush;
+	
+	procedure Set_Encoding (
+		Object : in out Emitter;
+		Encoding : in YAML.Encoding)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_encoding (
+			Raw_Object,
+			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
+	end Set_Encoding;
+	
+	procedure Set_Canonical (
+		Object : in out Emitter;
+		Canonical : in Boolean)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_canonical (Raw_Object, Boolean'Pos (Canonical));
+	end Set_Canonical;
+	
+	procedure Set_Indent (
+		Object : in out Emitter;
+		Indent : in Indent_Width)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_indent (Raw_Object, C.signed_int (Indent));
+	end Set_Indent;
+	
+	procedure Set_Width (
+		Object : in out Emitter;
+		Width : in Line_Width)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_width (Raw_Object, C.signed_int (Width));
+	end Set_Width;
+	
+	procedure Set_Unicode (
+		Object : in out Emitter;
+		Unicode : in Boolean)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_unicode (Raw_Object, Boolean'Pos (Unicode));
+	end Set_Unicode;
+	
+	procedure Set_Break (
+		Object : in out Emitter;
+		Break : in Line_Break)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_break (
+			Raw_Object,
+			C.yaml.yaml_break_t'Enum_Val (Line_Break'Enum_Rep (Break)));
+	end Set_Break;
 	
 	procedure Emit (Object : in out Emitter; Event : in YAML.Event) is
 		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
@@ -685,68 +869,24 @@ package body YAML is
 		end if;
 	end Emit;
 	
-	function End_Mark (Parsing_Entry : Parsing_Entry_Type)
-		return Mark_Reference_Type is
-	begin
-		return (Element => Parsing_Entry.Data.End_Mark'Unrestricted_Access);
-			-- [gcc-6] wrongly detected as dangling
-	end End_Mark;
+	-- private implementation of emitter
 	
-	overriding procedure Finalize (Object : in out Parsing_Entry_Type) is
-	begin
-		if Object.Data.Delete /= null then
-			Object.Data.Delete (Object.Data);
-		end if;
-	end Finalize;
+	package body Controlled_Emitters is
+		
+		function Reference (Object : in out YAML.Emitter)
+			return not null access C.yaml.yaml_emitter_t is
+		begin
+			return Emitter (Object).Raw.X'Unrestricted_Access;
+		end Reference;
+		
+		overriding procedure Finalize (Object : in out Emitter) is
+		begin
+			C.yaml.yaml_emitter_delete (Object.Raw.X'Access);
+		end Finalize;
+		
+	end Controlled_Emitters;
 	
-	procedure Flush (Object : in out Emitter) is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		if C.yaml.yaml_emitter_flush (Raw_Object) = 0 then
-			Raise_Error (Raw_Object.error, Raw_Object.problem, null);
-		end if;
-	end Flush;
-	
-	procedure Parse (
-		Object : in out Parser;
-		Process : not null access procedure (
-			Event : in YAML.Event;
-			Start_Mark, End_Mark : in Mark))
-	is
-		Parsed_Data : Parsed_Data_Type;
-	begin
-		Parse (Object, Parsed_Data);
-		Process (Parsed_Data.Event, Parsed_Data.Start_Mark, Parsed_Data.End_Mark);
-		Parsed_Data.Delete (Parsed_Data);
-	end Parse;
-	
-	procedure Parse (
-		Object : in out Parser;
-		Parsing_Entry : out Parsing_Entry_Type) is
-	begin
-		Parse (Object, Parsing_Entry.Data);
-	end Parse;
-	
-	procedure Parse_Document_Start (Object : in out Parser) is
-	begin
-		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_START_EVENT);
-	end Parse_Document_Start;
-	
-	procedure Parse_Document_End (Object : in out Parser) is
-	begin
-		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_END_EVENT);
-	end Parse_Document_End;
-	
-	procedure Parse_Stream_Start (Object : in out Parser) is
-	begin
-		Parse_Expection (Object, C.yaml.YAML_STREAM_START_EVENT);
-	end Parse_Stream_Start;
-	
-	procedure Parse_Stream_End (Object : in out Parser) is
-	begin
-		Parse_Expection (Object, C.yaml.YAML_STREAM_END_EVENT);
-	end Parse_Stream_End;
+	-- private implementation of exceptions
 	
 	procedure Raise_Error (
 		Error : in C.yaml.yaml_error_type_t;
@@ -775,133 +915,5 @@ package body YAML is
 				raise Use_Error with Message;
 		end case;
 	end Raise_Error;
-	
-	procedure Set_Break (
-		Object : in out Emitter;
-		Break : in Line_Break)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_break (
-			Raw_Object,
-			C.yaml.yaml_break_t'Enum_Val (Line_Break'Enum_Rep (Break)));
-	end Set_Break;
-	
-	procedure Set_Canonical (
-		Object : in out Emitter;
-		Canonical : in Boolean)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_canonical (Raw_Object, Boolean'Pos (Canonical));
-	end Set_Canonical;
-	
-	procedure Set_Encoding (
-		Object : in out Parser;
-		Encoding : in YAML.Encoding)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
-			Controlled_Parsers.Reference (Object);
-	begin
-		C.yaml.yaml_parser_set_encoding (
-			Raw_Object,
-			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
-	end Set_Encoding;
-	
-	procedure Set_Encoding (
-		Object : in out Emitter;
-		Encoding : in YAML.Encoding)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_encoding (
-			Raw_Object,
-			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
-	end Set_Encoding;
-	
-	procedure Set_Indent (
-		Object : in out Emitter;
-		Indent : in Indent_Width)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_indent (Raw_Object, C.signed_int (Indent));
-	end Set_Indent;
-	
-	procedure Set_Unicode (
-		Object : in out Emitter;
-		Unicode : in Boolean)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_unicode (Raw_Object, Boolean'Pos (Unicode));
-	end Set_Unicode;
-	
-	procedure Set_Width (
-		Object : in out Emitter;
-		Width : in Line_Width)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_width (Raw_Object, C.signed_int (Width));
-	end Set_Width;
-	
-	function Start_Mark (Parsing_Entry : Parsing_Entry_Type)
-		return Mark_Reference_Type is
-	begin
-		return (Element => Parsing_Entry.Data.Start_Mark'Unrestricted_Access);
-			-- [gcc-6] wrongly detected as dangling
-	end Start_Mark;
-	
-	function Value (Parsing_Entry : Parsing_Entry_Type)
-		return Event_Reference_Type is
-	begin
-		return (Element => Parsing_Entry.Data.Event'Unrestricted_Access);
-			-- [gcc-6] wrongly detected as dangling
-	end Value;
-	
-	function Version return String is
-		P : constant C.char_const_ptr := C.yaml.yaml_get_version_string;
-		S : String (1 .. Length (P));
-		for S'Address use To_Address (P);
-	begin
-		return S;
-	end Version;
-	
-	package body Controlled_Parsers is
-		
-		function Reference (Object : in out YAML.Parser)
-			return not null access C.yaml.yaml_parser_t is
-		begin
-			return Parser (Object).Raw.X'Unrestricted_Access;
-		end Reference;
-		
-		overriding procedure Finalize (Object : in out Parser) is
-		begin
-			C.yaml.yaml_parser_delete (Object.Raw.X'Access);
-		end Finalize;
-		
-	end Controlled_Parsers;
-	
-	package body Controlled_Emitters is
-		
-		function Reference (Object : in out YAML.Emitter)
-			return not null access C.yaml.yaml_emitter_t is
-		begin
-			return Emitter (Object).Raw.X'Unrestricted_Access;
-		end Reference;
-		
-		overriding procedure Finalize (Object : in out Emitter) is
-		begin
-			C.yaml.yaml_emitter_delete (Object.Raw.X'Access);
-		end Finalize;
-		
-	end Controlled_Emitters;
 	
 end YAML;

@@ -10,7 +10,7 @@ package body Serialization is
 		end if;
 	end Error_Message;
 	
-	-- implementation
+	-- private implementation
 	
 	procedure Advance_Structure (
 		Object : not null access Reader;
@@ -33,6 +33,8 @@ package body Serialization is
 				Advance (Class (Object), Position);
 		end case;
 	end Advance_Structure;
+	
+	-- implementation of scalar
 	
 	procedure IO (
 		Object : not null access Serializer;
@@ -223,27 +225,6 @@ package body Serialization is
 		return IO (Object, "");
 	end IO;
 	
-	overriding function First (Object : Mapping_Iterator) return Cursor is
-	begin
-		return Cursor (Object.Entry_Presence);
-	end First;
-	
-	overriding function Next (Object : Mapping_Iterator; Position : Cursor)
-		return Cursor
-	is
-		pragma Unreferenced (Position);
-	begin
-		case Object.Serializer.Direction is
-			when Reading =>
-				Advance_Structure (Object.Serializer.Reader, In_Mapping);
-				return Cursor (
-					Next_Kind (Object.Serializer.Reader) /= Leave_Mapping);
-			when Writing =>
-				Leave_Mapping (Object.Serializer.Writer);
-				return False;
-		end case;
-	end Next;
-	
 	package body IO_Map_2005 is
 		
 		procedure IO (
@@ -387,6 +368,29 @@ package body Serialization is
 		end IO;
 		
 	end IO_Map_2012;
+	
+	-- private implementation of mapping
+	
+	overriding function First (Object : Mapping_Iterator) return Cursor is
+	begin
+		return Cursor (Object.Entry_Presence);
+	end First;
+	
+	overriding function Next (Object : Mapping_Iterator; Position : Cursor)
+		return Cursor
+	is
+		pragma Unreferenced (Position);
+	begin
+		case Object.Serializer.Direction is
+			when Reading =>
+				Advance_Structure (Object.Serializer.Reader, In_Mapping);
+				return Cursor (
+					Next_Kind (Object.Serializer.Reader) /= Leave_Mapping);
+			when Writing =>
+				Leave_Mapping (Object.Serializer.Writer);
+				return False;
+		end case;
+	end Next;
 	
 	-- implementation of sequence
 	

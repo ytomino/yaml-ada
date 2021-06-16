@@ -7,8 +7,6 @@ package body Serialization.YAML is
 	
 	procedure Free is
 		new Ada.Unchecked_Deallocation (Serializer, Serializer_Access);
-	procedure Free is new Ada.Unchecked_Deallocation (Reader, Reader_Access);
-	procedure Free is new Ada.Unchecked_Deallocation (Writer, Writer_Access);
 	
 	procedure Free_And_Null (X : in out Ada.Strings.Unbounded.String_Access) is
 	begin
@@ -17,6 +15,31 @@ package body Serialization.YAML is
 			X := Null_String'Access;
 		end if;
 	end Free_And_Null;
+	
+	procedure Free is new Ada.Unchecked_Deallocation (Reader, Reader_Access);
+	procedure Free is new Ada.Unchecked_Deallocation (Writer, Writer_Access);
+	
+	-- private implementation
+	
+	overriding procedure Finalize (Object : in out Reference_Type) is
+	begin
+		Free (Object.Serializer_Body);
+		if Object.Reader_Body /= null then
+			if Object.Reader_Body.Next_Name /= Null_String'Access then
+				Ada.Strings.Unbounded.Free (Object.Reader_Body.Next_Name);
+			end if;
+			if Object.Reader_Body.Next_Value /= Null_String'Access then
+				Ada.Strings.Unbounded.Free (Object.Reader_Body.Next_Value);
+			end if;
+			Free (Object.Reader_Body);
+		end if;
+		if Object.Writer_Body /= null then
+			Ada.Strings.Unbounded.Free (Object.Writer_Body.Tag);
+			Free (Object.Writer_Body);
+		end if;
+	end Finalize;
+	
+	-- reading
 	
 	procedure Handle (
 		Object : not null access Reader;
@@ -97,228 +120,7 @@ package body Serialization.YAML is
 		end;
 	end Advance_Start;
 	
-	procedure Emit_Name (Object : not null access Writer; Name : in String) is
-	begin
-		Standard.YAML.Emit (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Scalar,
-				Anchor => null,
-				Tag => null,
-				Value => Name'Unrestricted_Access,
-				Plain_Implicit_Tag => True,
-				Quoted_Implicit_Tag => True,
-				Scalar_Style => Standard.YAML.Any));
-	end Emit_Name;
-	
-	procedure Emit_Document_End (Object : not null access Writer) is
-	begin
-		Standard.YAML.Emit (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Document_End, Implicit_Indicator => True));
-	end Emit_Document_End;
-	
-	-- implementation
-	
-	overriding procedure Advance (
-		Object : not null access Reader;
-		Position : in State) is
-	begin
-		Free_And_Null (Object.Next_Name);
-		if Position = In_Mapping then
-			declare
-				Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
-			begin
-				Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
-				declare
-					Event : Standard.YAML.Event
-						renames Standard.YAML.Value (Parsing_Entry).Element.all;
-				begin
-					if Event.Event_Type = Standard.YAML.Scalar then
-						Object.Next_Name := new String'(Event.Value.all);
---						goto Process_Value;
-					else
-						Handle (Object, Event); -- complex mapping key
-						return;
-					end if;
-				end;
-			end;
-		end if;
---	<<Process_Value>>
-		declare
-			Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
-		begin
-			Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
-			Handle (Object, Standard.YAML.Value (Parsing_Entry).Element.all);
-		end;
-	end Advance;
-	
-	overriding procedure Enter_Mapping (
-		Object : not null access Writer;
-		Name : in String)
-	is
-		Tag : Ada.Strings.Unbounded.String_Access := null;
-		Implicit_Tag : Boolean;
-	begin
-		if Name /= "" then
-			if Object.Tag /= null then
-				raise Program_Error;
-			end if;
-			Emit_Name (Object, Name);
-			Implicit_Tag := True;
-		else
-			if Object.Tag /= null then
-				Tag := Object.Tag;
-				Implicit_Tag := False;
-			else
-				Implicit_Tag := True;
-			end if;
-		end if;
-		Standard.YAML.Emit (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Mapping_Start,
-				Anchor => null,
-				Tag => Tag,
-				Implicit_Tag => Implicit_Tag,
-				Mapping_Style => Standard.YAML.Any));
-		if Tag /= null then
-			Object.Tag := null;
-			Ada.Strings.Unbounded.Free (Tag);
-		end if;
-		Object.Level := Object.Level + 1;
-	end Enter_Mapping;
-	
-	overriding procedure Enter_Sequence (
-		Object : not null access Writer;
-		Name : in String)
-	is
-		Tag : Ada.Strings.Unbounded.String_Access := null;
-		Implicit_Tag : Boolean;
-	begin
-		if Name /= "" then
-			if Object.Tag /= null then
-				raise Program_Error;
-			end if;
-			Emit_Name (Object, Name);
-			Implicit_Tag := True;
-		else
-			if Object.Tag /= null then
-				Tag := Object.Tag;
-				Implicit_Tag := False;
-			else
-				Implicit_Tag := True;
-			end if;
-		end if;
-		Standard.YAML.Emit (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Sequence_Start,
-				Anchor => null,
-				Tag => Tag,
-				Implicit_Tag => Implicit_Tag,
-				Sequence_Style => Standard.YAML.Any));
-		if Tag /= null then
-			Object.Tag := null;
-			Ada.Strings.Unbounded.Free (Tag);
-		end if;
-		Object.Level := Object.Level + 1;
-	end Enter_Sequence;
-	
-	overriding procedure Finalize (Object : in out Reference_Type) is
-	begin
-		Free (Object.Serializer_Body);
-		if Object.Reader_Body /= null then
-			if Object.Reader_Body.Next_Name /= Null_String'Access then
-				Ada.Strings.Unbounded.Free (Object.Reader_Body.Next_Name);
-			end if;
-			if Object.Reader_Body.Next_Value /= Null_String'Access then
-				Ada.Strings.Unbounded.Free (Object.Reader_Body.Next_Value);
-			end if;
-			Free (Object.Reader_Body);
-		end if;
-		if Object.Writer_Body /= null then
-			Ada.Strings.Unbounded.Free (Object.Writer_Body.Tag);
-			Free (Object.Writer_Body);
-		end if;
-	end Finalize;
-	
-	overriding procedure Leave_Mapping (Object : not null access Writer) is
-	begin
-		Standard.YAML.Emit (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Mapping_End));
-		Object.Level := Object.Level - 1;
-		if Object.Level = 0 then
-			Emit_Document_End (Object);
-		end if;
-	end Leave_Mapping;
-	
-	overriding procedure Leave_Sequence (Object : not null access Writer) is
-	begin
-		Standard.YAML.Emit (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Sequence_End));
-		Object.Level := Object.Level - 1;
-		if Object.Level = 0 then
-			Emit_Document_End (Object);
-		end if;
-	end Leave_Sequence;
-	
-	overriding function Next_Kind (Object : not null access Reader)
-		return Stream_Element_Kind is
-	begin
-		return Object.Next_Kind;
-	end Next_Kind;
-	
-	overriding function Next_Name (Object : not null access Reader)
-		return not null access constant String is
-	begin
-		return Object.Next_Name;
-	end Next_Name;
-	
-	overriding function Next_Value (Object : not null access Reader)
-		return not null access constant String is
-	begin
-		return Object.Next_Value;
-	end Next_Value;
-	
-	overriding procedure Put (
-		Object : not null access Writer;
-		Name : in String;
-		Item : in String)
-	is
-		Tag : Ada.Strings.Unbounded.String_Access := null;
-		Implicit_Tag : Boolean;
-	begin
-		if Name /= "" then
-			if Object.Tag /= null then
-				raise Program_Error;
-			end if;
-			Emit_Name (Object, Name);
-			Implicit_Tag := True;
-		else
-			if Object.Tag /= null then
-				Tag := Object.Tag;
-				Implicit_Tag := False;
-			else
-				Implicit_Tag := True;
-			end if;
-		end if;
-		Standard.YAML.Emit (
-			Object.Emitter.all,
-			(Event_Type => Standard.YAML.Scalar,
-				Anchor => null,
-				Tag => Tag,
-				Value => Item'Unrestricted_Access,
-				Plain_Implicit_Tag => Implicit_Tag,
-				Quoted_Implicit_Tag => Implicit_Tag,
-				Scalar_Style => Standard.YAML.Any));
-		if Tag /= null then
-			Object.Tag := null;
-			Ada.Strings.Unbounded.Free (Tag);
-		end if;
-		if Object.Level = 0 then
-			Emit_Document_End (Object);
-		end if;
-	end Put;
+	-- implementation of reading
 	
 	function Reading (
 		Parser : not null access Standard.YAML.Parser;
@@ -368,6 +170,83 @@ package body Serialization.YAML is
 			raise;
 	end Reading;
 	
+	-- private implementation of reading
+	
+	overriding function Next_Kind (Object : not null access Reader)
+		return Stream_Element_Kind is
+	begin
+		return Object.Next_Kind;
+	end Next_Kind;
+	
+	overriding function Next_Name (Object : not null access Reader)
+		return not null access constant String is
+	begin
+		return Object.Next_Name;
+	end Next_Name;
+	
+	overriding function Next_Value (Object : not null access Reader)
+		return not null access constant String is
+	begin
+		return Object.Next_Value;
+	end Next_Value;
+	
+	overriding procedure Advance (
+		Object : not null access Reader;
+		Position : in State) is
+	begin
+		Free_And_Null (Object.Next_Name);
+		if Position = In_Mapping then
+			declare
+				Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+			begin
+				Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+				declare
+					Event : Standard.YAML.Event
+						renames Standard.YAML.Value (Parsing_Entry).Element.all;
+				begin
+					if Event.Event_Type = Standard.YAML.Scalar then
+						Object.Next_Name := new String'(Event.Value.all);
+--						goto Process_Value;
+					else
+						Handle (Object, Event); -- complex mapping key
+						return;
+					end if;
+				end;
+			end;
+		end if;
+--	<<Process_Value>>
+		declare
+			Parsing_Entry : Standard.YAML.Parsing_Entry_Type;
+		begin
+			Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+			Handle (Object, Standard.YAML.Value (Parsing_Entry).Element.all);
+		end;
+	end Advance;
+	
+	-- writing
+	
+	procedure Emit_Name (Object : not null access Writer; Name : in String) is
+	begin
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Scalar,
+				Anchor => null,
+				Tag => null,
+				Value => Name'Unrestricted_Access,
+				Plain_Implicit_Tag => True,
+				Quoted_Implicit_Tag => True,
+				Scalar_Style => Standard.YAML.Any));
+	end Emit_Name;
+	
+	procedure Emit_Document_End (Object : not null access Writer) is
+	begin
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Document_End, Implicit_Indicator => True));
+	end Emit_Document_End;
+	
+	-- implementation of writing
+	
 	function Writing (
 		Emitter : not null access Standard.YAML.Emitter;
 		Tag : String)
@@ -412,5 +291,139 @@ package body Serialization.YAML is
 			end if;
 			raise;
 	end Writing;
+	
+	-- private implementation of writing
+	
+	overriding procedure Put (
+		Object : not null access Writer;
+		Name : in String;
+		Item : in String)
+	is
+		Tag : Ada.Strings.Unbounded.String_Access := null;
+		Implicit_Tag : Boolean;
+	begin
+		if Name /= "" then
+			if Object.Tag /= null then
+				raise Program_Error;
+			end if;
+			Emit_Name (Object, Name);
+			Implicit_Tag := True;
+		else
+			if Object.Tag /= null then
+				Tag := Object.Tag;
+				Implicit_Tag := False;
+			else
+				Implicit_Tag := True;
+			end if;
+		end if;
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Scalar,
+				Anchor => null,
+				Tag => Tag,
+				Value => Item'Unrestricted_Access,
+				Plain_Implicit_Tag => Implicit_Tag,
+				Quoted_Implicit_Tag => Implicit_Tag,
+				Scalar_Style => Standard.YAML.Any));
+		if Tag /= null then
+			Object.Tag := null;
+			Ada.Strings.Unbounded.Free (Tag);
+		end if;
+		if Object.Level = 0 then
+			Emit_Document_End (Object);
+		end if;
+	end Put;
+	
+	overriding procedure Enter_Mapping (
+		Object : not null access Writer;
+		Name : in String)
+	is
+		Tag : Ada.Strings.Unbounded.String_Access := null;
+		Implicit_Tag : Boolean;
+	begin
+		if Name /= "" then
+			if Object.Tag /= null then
+				raise Program_Error;
+			end if;
+			Emit_Name (Object, Name);
+			Implicit_Tag := True;
+		else
+			if Object.Tag /= null then
+				Tag := Object.Tag;
+				Implicit_Tag := False;
+			else
+				Implicit_Tag := True;
+			end if;
+		end if;
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Mapping_Start,
+				Anchor => null,
+				Tag => Tag,
+				Implicit_Tag => Implicit_Tag,
+				Mapping_Style => Standard.YAML.Any));
+		if Tag /= null then
+			Object.Tag := null;
+			Ada.Strings.Unbounded.Free (Tag);
+		end if;
+		Object.Level := Object.Level + 1;
+	end Enter_Mapping;
+	
+	overriding procedure Leave_Mapping (Object : not null access Writer) is
+	begin
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Mapping_End));
+		Object.Level := Object.Level - 1;
+		if Object.Level = 0 then
+			Emit_Document_End (Object);
+		end if;
+	end Leave_Mapping;
+	
+	overriding procedure Enter_Sequence (
+		Object : not null access Writer;
+		Name : in String)
+	is
+		Tag : Ada.Strings.Unbounded.String_Access := null;
+		Implicit_Tag : Boolean;
+	begin
+		if Name /= "" then
+			if Object.Tag /= null then
+				raise Program_Error;
+			end if;
+			Emit_Name (Object, Name);
+			Implicit_Tag := True;
+		else
+			if Object.Tag /= null then
+				Tag := Object.Tag;
+				Implicit_Tag := False;
+			else
+				Implicit_Tag := True;
+			end if;
+		end if;
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Sequence_Start,
+				Anchor => null,
+				Tag => Tag,
+				Implicit_Tag => Implicit_Tag,
+				Sequence_Style => Standard.YAML.Any));
+		if Tag /= null then
+			Object.Tag := null;
+			Ada.Strings.Unbounded.Free (Tag);
+		end if;
+		Object.Level := Object.Level + 1;
+	end Enter_Sequence;
+	
+	overriding procedure Leave_Sequence (Object : not null access Writer) is
+	begin
+		Standard.YAML.Emit (
+			Object.Emitter.all,
+			(Event_Type => Standard.YAML.Sequence_End));
+		Object.Level := Object.Level - 1;
+		if Object.Level = 0 then
+			Emit_Document_End (Object);
+		end if;
+	end Leave_Sequence;
 	
 end Serialization.YAML;
