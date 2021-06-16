@@ -459,7 +459,7 @@ package body YAML is
 			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
 	end Set_Encoding;
 	
-	procedure Parse (
+	procedure Get (
 		Object : in out Parser;
 		Process : not null access procedure (
 			Event : in YAML.Event;
@@ -470,7 +470,7 @@ package body YAML is
 		Parse (Object, Parsed_Data);
 		Process (Parsed_Data.Event, Parsed_Data.Start_Mark, Parsed_Data.End_Mark);
 		Parsed_Data.Delete (Parsed_Data);
-	end Parse;
+	end Get;
 	
 	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Event_Reference_Type is
@@ -490,32 +490,32 @@ package body YAML is
 		return (Element => Parsing_Entry.Data.End_Mark'Access);
 	end End_Mark;
 	
-	procedure Parse (
+	procedure Get (
 		Object : in out Parser;
 		Parsing_Entry : out Parsing_Entry_Type) is
 	begin
 		Parse (Object, Parsing_Entry.Data);
-	end Parse;
+	end Get;
 	
-	procedure Parse_Document_Start (Object : in out Parser) is
+	procedure Get_Document_Start (Object : in out Parser) is
 	begin
 		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_START_EVENT);
-	end Parse_Document_Start;
+	end Get_Document_Start;
 	
-	procedure Parse_Document_End (Object : in out Parser) is
+	procedure Get_Document_End (Object : in out Parser) is
 	begin
 		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_END_EVENT);
-	end Parse_Document_End;
+	end Get_Document_End;
 	
-	procedure Parse_Stream_Start (Object : in out Parser) is
+	procedure Get_Stream_Start (Object : in out Parser) is
 	begin
 		Parse_Expection (Object, C.yaml.YAML_STREAM_START_EVENT);
-	end Parse_Stream_Start;
+	end Get_Stream_Start;
 	
-	procedure Parse_Stream_End (Object : in out Parser) is
+	procedure Get_Stream_End (Object : in out Parser) is
 	begin
 		Parse_Expection (Object, C.yaml.YAML_STREAM_END_EVENT);
-	end Parse_Stream_End;
+	end Get_Stream_End;
 	
 	-- private implementation of parser
 	
@@ -671,7 +671,7 @@ package body YAML is
 			C.yaml.yaml_break_t'Enum_Val (Line_Break'Enum_Rep (Break)));
 	end Set_Break;
 	
-	procedure Emit (Object : in out Emitter; Event : in YAML.Event) is
+	procedure Put (Object : in out Emitter; Event : in YAML.Event) is
 		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
 			Controlled_Emitters.Reference (Object);
 		Ev : aliased C.yaml.yaml_event_t;
@@ -864,7 +864,7 @@ package body YAML is
 		if C.yaml.yaml_emitter_emit (Raw_Object, Ev'Access) = 0 then
 			Raise_Error (Raw_Object.error, Raw_Object.problem, null);
 		end if;
-	end Emit;
+	end Put;
 	
 	-- private implementation of emitter
 	

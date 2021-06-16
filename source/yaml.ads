@@ -148,7 +148,7 @@ package YAML is
 		Object : in out Parser;
 		Encoding : in YAML.Encoding);
 	
-	procedure Parse (
+	procedure Get (
 		Object : in out Parser;
 		Process : not null access procedure (
 			Event : in YAML.Event;
@@ -175,14 +175,14 @@ package YAML is
 	pragma Inline (Start_Mark);
 	pragma Inline (End_Mark);
 	
-	procedure Parse (
+	procedure Get (
 		Object : in out Parser;
 		Parsing_Entry : out Parsing_Entry_Type);
 	
-	procedure Parse_Document_Start (Object : in out Parser);
-	procedure Parse_Document_End (Object : in out Parser);
-	procedure Parse_Stream_Start (Object : in out Parser);
-	procedure Parse_Stream_End (Object : in out Parser);
+	procedure Get_Document_Start (Object : in out Parser);
+	procedure Get_Document_End (Object : in out Parser);
+	procedure Get_Stream_Start (Object : in out Parser);
+	procedure Get_Stream_End (Object : in out Parser);
 	
 	-- emitter
 	
@@ -202,7 +202,7 @@ package YAML is
 	procedure Set_Unicode (Object : in out Emitter; Unicode : in Boolean);
 	procedure Set_Break (Object : in out Emitter; Break : in Line_Break);
 	
-	procedure Emit (Object : in out Emitter; Event : in YAML.Event);
+	procedure Put (Object : in out Emitter; Event : in YAML.Event);
 	
 	-- exceptions
 	

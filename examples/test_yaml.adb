@@ -170,7 +170,7 @@ begin
 		W : YAML.Emitter := YAML.Create (Put'Access);
 	begin
 		for I in Data'Range loop
-			YAML.Emit (W, Data (I).all);
+			YAML.Put (W, Data (I).all);
 		end loop;
 		YAML.Flush (W);
 	end;
@@ -185,7 +185,7 @@ begin
 			Put ("Writing...");
 			for I in Data'Range loop
 				Put (I'Img);
-				YAML.Emit (W, Data (I).all);
+				YAML.Put (W, Data (I).all);
 			end loop;
 			YAML.Flush (W);
 			Put (" ok");
@@ -219,7 +219,7 @@ begin
 						end if;
 					end Process;
 				begin
-					YAML.Parse (R, Process'Access);
+					YAML.Get (R, Process'Access);
 				end;
 			end loop;
 			Put (" ok");

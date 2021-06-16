@@ -50,14 +50,14 @@ package body Serialization.YAML is
 				Object.Next_Kind := Value;
 				Free_And_Null (Object.Next_Value);
 				if Object.Level = 0 then
-					Standard.YAML.Parse_Document_End (Object.Parser.all);
+					Standard.YAML.Get_Document_End (Object.Parser.all);
 				end if;
 			when Standard.YAML.Scalar =>
 				Object.Next_Kind := Value;
 				Free_And_Null (Object.Next_Value);
 				Object.Next_Value := new String'(Event.Value.all);
 				if Object.Level = 0 then
-					Standard.YAML.Parse_Document_End (Object.Parser.all);
+					Standard.YAML.Get_Document_End (Object.Parser.all);
 				end if;
 			when Standard.YAML.Sequence_Start =>
 				Object.Next_Kind := Enter_Sequence;
@@ -68,7 +68,7 @@ package body Serialization.YAML is
 				Free_And_Null (Object.Next_Value);
 				Object.Level := Object.Level - 1;
 				if Object.Level = 0 then
-					Standard.YAML.Parse_Document_End (Object.Parser.all);
+					Standard.YAML.Get_Document_End (Object.Parser.all);
 				end if;
 			when Standard.YAML.Mapping_Start =>
 				Object.Next_Kind := Enter_Mapping;
@@ -79,7 +79,7 @@ package body Serialization.YAML is
 				Free_And_Null (Object.Next_Value);
 				Object.Level := Object.Level - 1;
 				if Object.Level = 0 then
-					Standard.YAML.Parse_Document_End (Object.Parser.all);
+					Standard.YAML.Get_Document_End (Object.Parser.all);
 				end if;
 			when Standard.YAML.No_Event
 				| Standard.YAML.Stream_Start
@@ -97,7 +97,7 @@ package body Serialization.YAML is
 	is
 		Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 	begin
-		Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+		Standard.YAML.Get (Object.Parser.all, Parsing_Entry);
 		declare
 			Event : Standard.YAML.Event
 				renames Standard.YAML.Value (Parsing_Entry).Element.all;
@@ -150,7 +150,7 @@ package body Serialization.YAML is
 		do
 			pragma Unreferenced (Result);
 			In_Controlled := True;
-			Standard.YAML.Parse_Document_Start (R.Parser.all);
+			Standard.YAML.Get_Document_Start (R.Parser.all);
 			Advance_Start (R, Tag);
 		end return;
 	exception
@@ -199,7 +199,7 @@ package body Serialization.YAML is
 			declare
 				Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 			begin
-				Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+				Standard.YAML.Get (Object.Parser.all, Parsing_Entry);
 				declare
 					Event : Standard.YAML.Event
 						renames Standard.YAML.Value (Parsing_Entry).Element.all;
@@ -218,7 +218,7 @@ package body Serialization.YAML is
 		declare
 			Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 		begin
-			Standard.YAML.Parse (Object.Parser.all, Parsing_Entry);
+			Standard.YAML.Get (Object.Parser.all, Parsing_Entry);
 			Handle (Object, Standard.YAML.Value (Parsing_Entry).Element.all);
 		end;
 	end Advance;
@@ -227,7 +227,7 @@ package body Serialization.YAML is
 	
 	procedure Emit_Name (Object : not null access Writer; Name : in String) is
 	begin
-		Standard.YAML.Emit (
+		Standard.YAML.Put (
 			Object.Emitter.all,
 			(Event_Type => Standard.YAML.Scalar,
 				Anchor => null,
@@ -240,7 +240,7 @@ package body Serialization.YAML is
 	
 	procedure Emit_Document_End (Object : not null access Writer) is
 	begin
-		Standard.YAML.Emit (
+		Standard.YAML.Put (
 			Object.Emitter.all,
 			(Event_Type => Standard.YAML.Document_End, Implicit_Indicator => True));
 	end Emit_Document_End;
@@ -275,7 +275,7 @@ package body Serialization.YAML is
 		do
 			pragma Unreferenced (Result);
 			In_Controlled := True;
-			Standard.YAML.Emit (
+			Standard.YAML.Put (
 				Emitter.all,
 				(Event_Type => Standard.YAML.Document_Start,
 					Implicit_Indicator => False,
@@ -316,7 +316,7 @@ package body Serialization.YAML is
 				Implicit_Tag := True;
 			end if;
 		end if;
-		Standard.YAML.Emit (
+		Standard.YAML.Put (
 			Object.Emitter.all,
 			(Event_Type => Standard.YAML.Scalar,
 				Anchor => null,
@@ -355,7 +355,7 @@ package body Serialization.YAML is
 				Implicit_Tag := True;
 			end if;
 		end if;
-		Standard.YAML.Emit (
+		Standard.YAML.Put (
 			Object.Emitter.all,
 			(Event_Type => Standard.YAML.Mapping_Start,
 				Anchor => null,
@@ -371,7 +371,7 @@ package body Serialization.YAML is
 	
 	overriding procedure Leave_Mapping (Object : not null access Writer) is
 	begin
-		Standard.YAML.Emit (
+		Standard.YAML.Put (
 			Object.Emitter.all,
 			(Event_Type => Standard.YAML.Mapping_End));
 		Object.Level := Object.Level - 1;
@@ -401,7 +401,7 @@ package body Serialization.YAML is
 				Implicit_Tag := True;
 			end if;
 		end if;
-		Standard.YAML.Emit (
+		Standard.YAML.Put (
 			Object.Emitter.all,
 			(Event_Type => Standard.YAML.Sequence_Start,
 				Anchor => null,
@@ -417,7 +417,7 @@ package body Serialization.YAML is
 	
 	overriding procedure Leave_Sequence (Object : not null access Writer) is
 	begin
-		Standard.YAML.Emit (
+		Standard.YAML.Put (
 			Object.Emitter.all,
 			(Event_Type => Standard.YAML.Sequence_End));
 		Object.Level := Object.Level - 1;
