@@ -206,7 +206,6 @@ package body Serialization.YAML is
 				begin
 					if Event.Event_Type = Standard.YAML.Scalar then
 						Object.Next_Name := new String'(Event.Value.all);
---						goto Process_Value;
 					else
 						Handle (Object, Event); -- complex mapping key
 						return;
@@ -214,7 +213,6 @@ package body Serialization.YAML is
 				end;
 			end;
 		end if;
---	<<Process_Value>>
 		declare
 			Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 		begin
