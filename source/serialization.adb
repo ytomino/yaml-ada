@@ -104,10 +104,7 @@ package body Serialization is
 						Im : String renames Image (Value);
 						First : Positive := Im'First;
 					begin
-						if Triming
-							and then First <= Im'Last
-							and then Im (First) = ' '
-						then
+						if Triming and then First <= Im'Last and then Im (First) = ' ' then
 							First := First + 1;
 						end if;
 						Put (Object.Writer, Name, Im (First .. Im'Last));
@@ -236,9 +233,7 @@ package body Serialization is
 				Name : in String;
 				Item : in out Element_Type))
 		is
-			procedure Process_Update (
-				Key : in String;
-				Item : in out Element_Type) is
+			procedure Process_Update (Key : in String; Item : in out Element_Type) is
 			begin
 				Callback (Object, Key, Item);
 			end Process_Update;
@@ -264,10 +259,7 @@ package body Serialization is
 								if not Inserted then
 									raise Constraint_Error;
 								end if;
-								Update_Element (
-									Value,
-									Position,
-									Process_Update'Access);
+								Update_Element (Value, Position, Process_Update'Access);
 							end;
 							Advance_Structure (Object.Reader, In_Mapping);
 						end loop;
@@ -384,8 +376,7 @@ package body Serialization is
 		case Object.Serializer.Direction is
 			when Reading =>
 				Advance_Structure (Object.Serializer.Reader, In_Mapping);
-				return Cursor (
-					Next_Kind (Object.Serializer.Reader) /= Leave_Mapping);
+				return Cursor (Next_Kind (Object.Serializer.Reader) /= Leave_Mapping);
 			when Writing =>
 				Leave_Mapping (Object.Serializer.Writer);
 				return False;
@@ -426,8 +417,7 @@ package body Serialization is
 											Index_Type'Val (
 												Natural'Min (
 													Index_Type'Pos (Index_Type'Last),
-													Index_Type'Pos (Index_Type'First)
-														+ 255)));
+													Index_Type'Pos (Index_Type'First) + 255)));
 								elsif Value'Last = Last then
 									declare
 										subtype Expanding_Range is
@@ -438,9 +428,7 @@ package body Serialization is
 														Index_Type'Pos (Index_Type'Last),
 														Index_Type'Pos (Value'Last) + 256));
 										Copy : constant Array_Access :=
-											new Array_Type'(
-												Value.all &
-												Array_Type'(Expanding_Range => <>));
+											new Array_Type'(Value.all & Array_Type'(Expanding_Range => <>));
 									begin
 										Free (Value);
 										Value := Copy;
@@ -456,8 +444,7 @@ package body Serialization is
 									Copy : Array_Access := null;
 								begin
 									if Last >= Value'First then
-										Copy :=
-											new Array_Type'(Value (Value'First .. Last));
+										Copy := new Array_Type'(Value (Value'First .. Last));
 									end if;
 									Free (Value);
 									Value := Copy;
@@ -512,10 +499,7 @@ package body Serialization is
 						Advance (Object.Reader, In_Sequence);
 						while Next_Kind (Object.Reader) /= Leave_Sequence loop
 							Append (Value, Default);
-							Update_Element (
-								Value,
-								Last (Value),
-								Process_Update'Access);
+							Update_Element (Value, Last (Value), Process_Update'Access);
 							Advance_Structure (Object.Reader, In_Sequence);
 						end loop;
 					end if;
@@ -567,9 +551,7 @@ package body Serialization is
 							declare
 								Last_Position : constant Cursor := Last (Value);
 							begin
-								Callback (
-									Object,
-									Reference (Value, Last_Position).Element.all);
+								Callback (Object, Reference (Value, Last_Position).Element.all);
 							end;
 							Advance_Structure (Object.Reader, In_Sequence);
 						end loop;
@@ -580,9 +562,7 @@ package body Serialization is
 						I : Cursor := First (Value);
 					begin
 						while Has_Element (I) loop
-							Callback (
-								Object,
-								Reference (Value, I).Element.all);
+							Callback (Object, Reference (Value, I).Element.all);
 							exit when I = Last (Value); -- for array ???
 							I := Next (I);
 						end loop;
@@ -705,8 +685,7 @@ package body Serialization is
 					begin
 						while Has_Element (I) loop
 							declare
-								Mutable_Item : Element_Type :=
-									Constant_Reference (Value, I).Element.all;
+								Mutable_Item : Element_Type := Constant_Reference (Value, I).Element.all;
 							begin
 								Callback (Object, Mutable_Item);
 							end;

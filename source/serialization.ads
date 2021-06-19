@@ -67,7 +67,8 @@ package Serialization is
 	private
 		package Enum_IO is
 			new IO_Custom (
-				Enumeration_Type, Enumeration_Type'Image,
+				Enumeration_Type,
+				Enumeration_Type'Image,
 				Enumeration_Type'Value,
 				Triming => True);
 		procedure IO (
