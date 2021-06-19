@@ -101,10 +101,8 @@ begin
 			declare
 				W : aliased YAML.Emitter := YAML.Create (Put'Access);
 			begin
-				YAML.Put (W, (Event_Type => YAML.Stream_Start, Encoding => YAML.Any));
 				IO (Serialization.YAML.Writing (W'Access, Root_Tag).Serializer, Data);
-				YAML.Put (W, (Event_Type => YAML.Stream_End));
-				YAML.Flush (W);
+				YAML.Finish (W);
 			end;
 			declare
 				File : Ada.Streams.Stream_IO.File_Type;
@@ -115,10 +113,8 @@ begin
 						YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 				begin
 					Put ("Writing...");
-					YAML.Put (W, (Event_Type => YAML.Stream_Start, Encoding => YAML.Any));
 					IO (Serialization.YAML.Writing (W'Access, Root_Tag).Serializer, Data);
-					YAML.Put (W, (Event_Type => YAML.Stream_End));
-					YAML.Flush (W);
+					YAML.Finish (W);
 					Put (" ok");
 					New_Line;
 				end;

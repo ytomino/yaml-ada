@@ -213,6 +213,8 @@ package YAML is
 		Object : in out Emitter;
 		Implicit_Indicator : in Boolean := True);
 	
+	procedure Finish (Object : in out Emitter);
+	
 	-- exceptions
 	
 	Status_Error : exception

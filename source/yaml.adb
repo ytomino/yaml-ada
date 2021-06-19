@@ -8,6 +8,7 @@ package body YAML is
 	use type C.ptrdiff_t;
 	use type C.size_t;
 	use type C.yaml.yaml_char_t_ptr;
+	use type C.yaml.yaml_emitter_state_t;
 	use type C.yaml.yaml_event_type_t;
 	use type C.yaml.yaml_tag_directive_t_ptr;
 	use type C.yaml.yaml_version_directive_t_ptr;
@@ -870,8 +871,14 @@ package body YAML is
 		Object : in out Emitter;
 		Implicit_Indicator : in Boolean := False;
 		Version_Directive : access constant YAML.Version_Directive := null;
-		Tag_Directives : access constant YAML.Tag_Directive_Array := null) is
+		Tag_Directives : access constant YAML.Tag_Directive_Array := null)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
 	begin
+		if Raw_Object.state = C.yaml.YAML_EMIT_STREAM_START_STATE then
+			Put (Object, (Event_Type => Stream_Start, Encoding => Any));
+		end if;
 		Put (
 			Object,
 			(Event_Type => Document_Start,
@@ -888,6 +895,12 @@ package body YAML is
 			Object,
 			(Event_Type => Document_End, Implicit_Indicator => Implicit_Indicator));
 	end Put_Document_End;
+	
+	procedure Finish (Object : in out Emitter) is
+	begin
+		Put (Object, (Event_Type => Stream_End));
+		Flush (Object);
+	end Finish;
 	
 	-- private implementation of emitter
 	
