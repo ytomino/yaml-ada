@@ -135,9 +135,8 @@ begin
 						YAML.Streams.Create (Ada.Streams.Stream_IO.Stream (File));
 				begin
 					Put ("Reading...");
-					YAML.Get_Stream_Start (R);
 					IO (Serialization.YAML.Reading (R'Access, Root_Tag).Serializer, Data2);
-					YAML.Get_Stream_End (R);
+					YAML.Finish (R);
 					Put (" ok");
 					New_Line;
 				end;

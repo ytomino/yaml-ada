@@ -10,6 +10,7 @@ package body YAML is
 	use type C.yaml.yaml_char_t_ptr;
 	use type C.yaml.yaml_emitter_state_t;
 	use type C.yaml.yaml_event_type_t;
+	use type C.yaml.yaml_parser_state_t;
 	use type C.yaml.yaml_tag_directive_t_ptr;
 	use type C.yaml.yaml_version_directive_t_ptr;
 	
@@ -499,7 +500,12 @@ package body YAML is
 	end Get;
 	
 	procedure Get_Document_Start (Object : in out Parser) is
+		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
+			Controlled_Parsers.Reference (Object);
 	begin
+		if Raw_Object.state = C.yaml.YAML_PARSE_STREAM_START_STATE then
+			Parse_Expection (Object, C.yaml.YAML_STREAM_START_EVENT);
+		end if;
 		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_START_EVENT);
 	end Get_Document_Start;
 	
@@ -508,15 +514,10 @@ package body YAML is
 		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_END_EVENT);
 	end Get_Document_End;
 	
-	procedure Get_Stream_Start (Object : in out Parser) is
-	begin
-		Parse_Expection (Object, C.yaml.YAML_STREAM_START_EVENT);
-	end Get_Stream_Start;
-	
-	procedure Get_Stream_End (Object : in out Parser) is
+	procedure Finish (Object : in out Parser) is
 	begin
 		Parse_Expection (Object, C.yaml.YAML_STREAM_END_EVENT);
-	end Get_Stream_End;
+	end Finish;
 	
 	-- private implementation of parser
 	

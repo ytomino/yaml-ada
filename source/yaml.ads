@@ -181,8 +181,8 @@ package YAML is
 	
 	procedure Get_Document_Start (Object : in out Parser);
 	procedure Get_Document_End (Object : in out Parser);
-	procedure Get_Stream_Start (Object : in out Parser);
-	procedure Get_Stream_End (Object : in out Parser);
+	
+	procedure Finish (Object : in out Parser);
 	
 	-- emitter
 	
