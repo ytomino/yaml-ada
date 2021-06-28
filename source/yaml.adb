@@ -162,7 +162,7 @@ package body YAML is
 	
 	procedure Delete_Event (Parsed_Data : in out Parsed_Data_Type) is
 	begin
-		C.yaml.yaml_event_delete (Parsed_Data.yaml_event'Access);
+		C.yaml.yaml_event_delete (Parsed_Data.U.yaml_event'Access);
 	end Delete_Event;
 	
 	procedure Delete_Document_Start_Event (
@@ -171,8 +171,7 @@ package body YAML is
 		declare
 			Tag_Directives : Tag_Directive_Array_Access :=
 				Remove_Constant (
-					Tag_Directive_Array_Constant_Access (
-						Parsed_Data.Event.Tag_Directives));
+					Tag_Directive_Array_Constant_Access (Parsed_Data.U.Event.Tag_Directives));
 		begin
 			if Tag_Directives /= null then
 				for I in Tag_Directives'Range loop
@@ -188,7 +187,7 @@ package body YAML is
 				Free (Tag_Directives);
 			end if;
 		end;
-		C.yaml.yaml_event_delete (Parsed_Data.yaml_event'Access);
+		C.yaml.yaml_event_delete (Parsed_Data.U.yaml_event'Access);
 	end Delete_Document_Start_Event;
 	
 	procedure Parse (
@@ -197,23 +196,23 @@ package body YAML is
 	is
 		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
 			Controlled_Parsers.Reference (Object);
-		Ev : C.yaml.yaml_event_t renames Parsed_Data.yaml_event;
+		Ev : C.yaml.yaml_event_t renames Parsed_Data.U.yaml_event;
 	begin
 		if C.yaml.yaml_parser_parse (Raw_Object, Ev'Access) = 0 then
 			Raise_Error (Raw_Object.error, Raw_Object.problem, Raw_Object.mark'Access);
 		end if;
-		Parsed_Data.Start_Mark.Index := Integer (Ev.start_mark.index);
-		Parsed_Data.Start_Mark.Line := Integer (Ev.start_mark.line);
-		Parsed_Data.Start_Mark.Column := Integer (Ev.start_mark.column);
-		Parsed_Data.End_Mark.Index := Integer (Ev.end_mark.index);
-		Parsed_Data.End_Mark.Line := Integer (Ev.end_mark.line);
-		Parsed_Data.End_Mark.Column := Integer (Ev.end_mark.column);
+		Parsed_Data.U.Start_Mark.Index := Integer (Ev.start_mark.index);
+		Parsed_Data.U.Start_Mark.Line := Integer (Ev.start_mark.line);
+		Parsed_Data.U.Start_Mark.Column := Integer (Ev.start_mark.column);
+		Parsed_Data.U.End_Mark.Index := Integer (Ev.end_mark.index);
+		Parsed_Data.U.End_Mark.Line := Integer (Ev.end_mark.line);
+		Parsed_Data.U.End_Mark.Column := Integer (Ev.end_mark.column);
 		case Ev.F_type is
 			when C.yaml.YAML_NO_EVENT =>
-				Parsed_Data.Event := Event'(Event_Type => No_Event);
+				Parsed_Data.U.Event := Event'(Event_Type => No_Event);
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_STREAM_START_EVENT =>
-				Parsed_Data.Event :=
+				Parsed_Data.U.Event :=
 					Event'(
 						Event_Type => Stream_Start,
 						Encoding =>
@@ -221,7 +220,7 @@ package body YAML is
 								C.yaml.yaml_encoding_t'Enum_Rep (Ev.data.stream_start.encoding)));
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_STREAM_END_EVENT =>
-				Parsed_Data.Event := Event'(Event_Type => Stream_End);
+				Parsed_Data.U.Event := Event'(Event_Type => Stream_End);
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_DOCUMENT_START_EVENT =>
 				declare
@@ -231,7 +230,7 @@ package body YAML is
 					if Ev.data.document_start.version_directive = null then
 						Version_Directive := null;
 					else
-						Version_Directive := Parsed_Data.Version_Directive'Unchecked_Access;
+						Version_Directive := Parsed_Data.U.Version_Directive'Unchecked_Access;
 						Version_Directive.Major :=
 							Integer (Ev.data.document_start.version_directive.major);
 						Version_Directive.Minor :=
@@ -261,7 +260,7 @@ package body YAML is
 							end loop;
 						end;
 					end if;
-					Parsed_Data.Event :=
+					Parsed_Data.U.Event :=
 						Event'(
 							Event_Type => Document_Start,
 							Version_Directive => Version_Directive,
@@ -270,7 +269,7 @@ package body YAML is
 				end;
 				Parsed_Data.Delete := Delete_Document_Start_Event'Access;
 			when C.yaml.YAML_DOCUMENT_END_EVENT =>
-				Parsed_Data.Event :=
+				Parsed_Data.U.Event :=
 					Event'(
 						Event_Type => Document_End,
 						Implicit_Indicator => Ev.data.document_end.implicit /= 0);
@@ -285,9 +284,9 @@ package body YAML is
 					Anchor_A : constant String_Access :=
 						Copy_String_Access (
 							Anchor_S'Unrestricted_Access,
-							Parsed_Data.Anchor_Constraint'Access);
+							Parsed_Data.U.Anchor_Constraint'Access);
 				begin
-					Parsed_Data.Event := Event'(Event_Type => Alias, Anchor => Anchor_A);
+					Parsed_Data.U.Event := Event'(Event_Type => Alias, Anchor => Anchor_A);
 				end;
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_SCALAR_EVENT =>
@@ -300,7 +299,7 @@ package body YAML is
 					Anchor_A : constant String_Access :=
 						Copy_String_Access (
 							Anchor_S'Unrestricted_Access,
-							Parsed_Data.Anchor_Constraint'Access);
+							Parsed_Data.U.Anchor_Constraint'Access);
 					-- tag
 					Tag_S : aliased
 						String (1 .. Length (To_char_const_ptr (Ev.data.scalar.tag)));
@@ -309,16 +308,16 @@ package body YAML is
 					Tag_A : constant String_Access :=
 						Copy_String_Access (
 							Tag_S'Unrestricted_Access,
-							Parsed_Data.Tag_Constraint'Access);
+							Parsed_Data.U.Tag_Constraint'Access);
 					-- value
 					Value_S : aliased String (1 .. Natural (Ev.data.scalar.length));
 					for Value_S'Address use To_Address (To_char_const_ptr (Ev.data.scalar.value));
 					Value_A : constant String_Access :=
 						Copy_String_Access (
 							Value_S'Unrestricted_Access,
-							Parsed_Data.Value_Constraint'Access);
+							Parsed_Data.U.Value_Constraint'Access);
 				begin
-					Parsed_Data.Event :=
+					Parsed_Data.U.Event :=
 						Event'(
 							Event_Type => Scalar,
 							Anchor => Anchor_A,
@@ -341,7 +340,7 @@ package body YAML is
 					Anchor_A : constant String_Access :=
 						Copy_String_Access (
 							Anchor_S'Unrestricted_Access,
-							Parsed_Data.Anchor_Constraint'Access);
+							Parsed_Data.U.Anchor_Constraint'Access);
 					-- tag
 					Tag_S : aliased
 						String (1 .. Length (To_char_const_ptr (Ev.data.sequence_start.tag)));
@@ -350,9 +349,9 @@ package body YAML is
 					Tag_A : constant String_Access :=
 						Copy_String_Access (
 							Tag_S'Unrestricted_Access,
-							Parsed_Data.Tag_Constraint'Access);
+							Parsed_Data.U.Tag_Constraint'Access);
 				begin
-					Parsed_Data.Event :=
+					Parsed_Data.U.Event :=
 						Event'(
 							Event_Type => Sequence_Start,
 							Anchor => Anchor_A,
@@ -364,7 +363,7 @@ package body YAML is
 				end;
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_SEQUENCE_END_EVENT =>
-				Parsed_Data.Event := Event'(Event_Type => Sequence_End);
+				Parsed_Data.U.Event := Event'(Event_Type => Sequence_End);
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_MAPPING_START_EVENT =>
 				declare
@@ -376,7 +375,7 @@ package body YAML is
 					Anchor_A : constant String_Access :=
 						Copy_String_Access (
 							Anchor_S'Unrestricted_Access,
-							Parsed_Data.Anchor_Constraint'Access);
+							Parsed_Data.U.Anchor_Constraint'Access);
 					-- tag
 					Tag_S : aliased
 						String (1 .. Length (To_char_const_ptr (Ev.data.mapping_start.tag)));
@@ -385,9 +384,9 @@ package body YAML is
 					Tag_A : constant String_Access :=
 						Copy_String_Access (
 							Tag_S'Unrestricted_Access,
-							Parsed_Data.Tag_Constraint'Access);
+							Parsed_Data.U.Tag_Constraint'Access);
 				begin
-					Parsed_Data.Event :=
+					Parsed_Data.U.Event :=
 						Event'(
 							Event_Type => Mapping_Start,
 							Anchor => Anchor_A,
@@ -399,7 +398,7 @@ package body YAML is
 				end;
 				Parsed_Data.Delete := Delete_Event'Access;
 			when C.yaml.YAML_MAPPING_END_EVENT =>
-				Parsed_Data.Event := Event'(Event_Type => Mapping_End);
+				Parsed_Data.U.Event := Event'(Event_Type => Mapping_End);
 				Parsed_Data.Delete := Delete_Event'Access;
 		end case;
 	end Parse;
@@ -470,26 +469,29 @@ package body YAML is
 		Parsed_Data : Parsed_Data_Type;
 	begin
 		Parse (Object, Parsed_Data);
-		Process (Parsed_Data.Event, Parsed_Data.Start_Mark, Parsed_Data.End_Mark);
+		Process (
+			Parsed_Data.U.Event,
+			Start_Mark => Parsed_Data.U.Start_Mark,
+			End_Mark => Parsed_Data.U.End_Mark);
 		Parsed_Data.Delete (Parsed_Data);
 	end Get;
 	
 	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Event_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.Event'Access);
+		return (Element => Parsing_Entry.Data.U.Event'Access);
 	end Value;
 	
 	function Start_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.Start_Mark'Access);
+		return (Element => Parsing_Entry.Data.U.Start_Mark'Access);
 	end Start_Mark;
 	
 	function End_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.End_Mark'Access);
+		return (Element => Parsing_Entry.Data.U.End_Mark'Access);
 	end End_Mark;
 	
 	procedure Get (

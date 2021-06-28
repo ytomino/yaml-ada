@@ -276,7 +276,7 @@ private
 	end record;
 	pragma Suppress_Initialization (String_Constraint);
 	
-	type Parsed_Data_Type is limited record
+	type Uninitialized_Parsing_Data is limited record
 		Event : aliased YAML.Event;
 		Start_Mark, End_Mark : aliased Mark;
 		Version_Directive : aliased YAML.Version_Directive;
@@ -284,9 +284,15 @@ private
 		Tag_Constraint : aliased String_Constraint;
 		Value_Constraint : aliased String_Constraint;
 		yaml_event : aliased C.yaml.yaml_event_t;
-		Delete : access procedure (Parsed_Data : in out Parsed_Data_Type);
 	end record;
-	pragma Suppress_Initialization (Parsed_Data_Type);
+	pragma Suppress_Initialization (Uninitialized_Parsing_Data);
+	
+	type Parsed_Data_Type is limited record
+		-- uninitialized
+		U : aliased Uninitialized_Parsing_Data;
+		-- initialized
+		Delete : access procedure (Parsed_Data : in out Parsed_Data_Type) := null;
+	end record;
 	
 	type Parsing_Entry_Type is new Ada.Finalization.Limited_Controlled
 		with record
