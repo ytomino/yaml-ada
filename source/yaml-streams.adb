@@ -47,16 +47,19 @@ package body YAML.Streams is
 	begin
 		return Result : Parser do
 			declare
-				Raw_Result : constant not null access C.yaml.yaml_parser_t :=
-					Controlled_Parsers.Reference (Result);
+				procedure Process (Raw_Result : not null access C.yaml.yaml_parser_t) is
+				begin
+					if C.yaml.yaml_parser_initialize (Raw_Result) = 0 then
+						Raise_Error (Raw_Result.error, Raw_Result.problem, null);
+					end if;
+					C.yaml.yaml_parser_set_input (
+						Raw_Result,
+						Read_Handler'Access,
+						C.void_ptr (Stream.all'Address));
+				end Process;
+				procedure Do_Create is new Controlled_Parsers.Update (Process);
 			begin
-				if C.yaml.yaml_parser_initialize (Raw_Result) = 0 then
-					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
-				end if;
-				C.yaml.yaml_parser_set_input (
-					Raw_Result,
-					Read_Handler'Access,
-					C.void_ptr (Stream.all'Address));
+				Do_Create (Controlled_Parsers.Parser (Result));
 			end;
 		end return;
 	end Create;
@@ -96,16 +99,19 @@ package body YAML.Streams is
 	begin
 		return Result : Emitter do
 			declare
-				Raw_Result : constant not null access C.yaml.yaml_emitter_t :=
-					Controlled_Emitters.Reference (Result);
+				procedure Process (Raw_Result : not null access C.yaml.yaml_emitter_t) is
+				begin
+					if C.yaml.yaml_emitter_initialize (Raw_Result) = 0 then
+						Raise_Error (Raw_Result.error, Raw_Result.problem, null);
+					end if;
+					C.yaml.yaml_emitter_set_output (
+						Raw_Result,
+						Write_Handler'Access,
+						C.void_ptr (Stream.all'Address));
+				end Process;
+				procedure Do_Create is new Controlled_Emitters.Update (Process);
 			begin
-				if C.yaml.yaml_emitter_initialize (Raw_Result) = 0 then
-					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
-				end if;
-				C.yaml.yaml_emitter_set_output (
-					Raw_Result,
-					Write_Handler'Access,
-					C.void_ptr (Stream.all'Address));
+				Do_Create (Controlled_Emitters.Emitter (Result));
 			end;
 		end return;
 	end Create;

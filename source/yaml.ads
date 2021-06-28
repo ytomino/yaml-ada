@@ -305,10 +305,9 @@ private
 		
 		type Parser is limited private;
 		
-		function Reference (Object : in out YAML.Parser)
-			return not null access C.yaml.yaml_parser_t;
-		
-		pragma Inline (Reference);
+		generic
+			with procedure Process (Raw : not null access C.yaml.yaml_parser_t);
+		procedure Update (Object : in out Parser);
 		
 	private
 		
@@ -334,10 +333,9 @@ private
 		
 		type Emitter is limited private;
 		
-		function Reference (Object : in out YAML.Emitter)
-			return not null access C.yaml.yaml_emitter_t;
-		
-		pragma Inline (Reference);
+		generic
+			with procedure Process (Raw : not null access C.yaml.yaml_emitter_t);
+		procedure Update (Object : in out Emitter);
 		
 	private
 		
