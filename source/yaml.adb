@@ -191,11 +191,9 @@ package body YAML is
 	end Delete_Document_Start_Event;
 	
 	procedure Parse (
-		Object : in out Parser;
+		Raw_Object : not null access C.yaml.yaml_parser_t;
 		Parsed_Data : out Parsed_Data_Type)
 	is
-		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
-			Controlled_Parsers.Reference (Object);
 		Ev : C.yaml.yaml_event_t renames Parsed_Data.U.yaml_event;
 	begin
 		if C.yaml.yaml_parser_parse (Raw_Object, Ev'Access) = 0 then
@@ -404,11 +402,9 @@ package body YAML is
 	end Parse;
 	
 	procedure Parse_Expection (
-		Object : in out Parser;
+		Raw_Object : not null access C.yaml.yaml_parser_t;
 		Expected : C.yaml.yaml_event_type_t)
 	is
-		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
-			Controlled_Parsers.Reference (Object);
 		Ev : aliased C.yaml.yaml_event_t;
 		pragma Suppress_Initialization (Ev);
 		T : C.yaml.yaml_event_type_t;
@@ -421,6 +417,28 @@ package body YAML is
 		if T /= Expected then
 			raise Data_Error;
 		end if;
+	end Parse_Expection;
+	
+	-- parser: wrappers
+	
+	procedure Parse (
+		Object : in out Parser;
+		Parsed_Data : out Parsed_Data_Type)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
+			Controlled_Parsers.Reference (Object);
+	begin
+		Parse (Raw_Object, Parsed_Data);
+	end Parse;
+	
+	procedure Parse_Expection (
+		Object : in out Parser;
+		Expected : C.yaml.yaml_event_type_t)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_parser_t :=
+			Controlled_Parsers.Reference (Object);
+	begin
+		Parse_Expection (Raw_Object, Expected);
 	end Parse_Expection;
 	
 	-- implementation of parser
@@ -506,9 +524,9 @@ package body YAML is
 			Controlled_Parsers.Reference (Object);
 	begin
 		if Raw_Object.state = C.yaml.YAML_PARSE_STREAM_START_STATE then
-			Parse_Expection (Object, C.yaml.YAML_STREAM_START_EVENT);
+			Parse_Expection (Raw_Object, C.yaml.YAML_STREAM_START_EVENT);
 		end if;
-		Parse_Expection (Object, C.yaml.YAML_DOCUMENT_START_EVENT);
+		Parse_Expection (Raw_Object, C.yaml.YAML_DOCUMENT_START_EVENT);
 	end Get_Document_Start;
 	
 	procedure Get_Document_End (Object : in out Parser) is
@@ -578,106 +596,10 @@ package body YAML is
 		return 1;
 	end Write_Handler;
 	
-	-- implementation of emitter
-	
-	function Create (Output : not null access procedure (Item : in String))
-		return Emitter
+	procedure Emit (
+		Raw_Object : not null access C.yaml.yaml_emitter_t;
+		Event : in YAML.Event)
 	is
-		type O is access procedure (Item : in String);
-		function To_void_ptr is new Ada.Unchecked_Conversion (O, C.void_ptr);
-	begin
-		return Result : Emitter do
-			declare
-				Raw_Result : constant not null access C.yaml.yaml_emitter_t :=
-					Controlled_Emitters.Reference (Result);
-			begin
-				if C.yaml.yaml_emitter_initialize (Raw_Result) = 0 then
-					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
-				end if;
-				C.yaml.yaml_emitter_set_output (
-					Raw_Result,
-					Write_Handler'Access,
-					To_void_ptr (Output));
-			end;
-		end return;
-	end Create;
-	
-	procedure Flush (Object : in out Emitter) is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		if C.yaml.yaml_emitter_flush (Raw_Object) = 0 then
-			Raise_Error (Raw_Object.error, Raw_Object.problem, null);
-		end if;
-	end Flush;
-	
-	procedure Set_Encoding (
-		Object : in out Emitter;
-		Encoding : in YAML.Encoding)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_encoding (
-			Raw_Object,
-			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
-	end Set_Encoding;
-	
-	procedure Set_Canonical (
-		Object : in out Emitter;
-		Canonical : in Boolean)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_canonical (Raw_Object, Boolean'Pos (Canonical));
-	end Set_Canonical;
-	
-	procedure Set_Indent (
-		Object : in out Emitter;
-		Indent : in Indent_Width)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_indent (Raw_Object, C.signed_int (Indent));
-	end Set_Indent;
-	
-	procedure Set_Width (
-		Object : in out Emitter;
-		Width : in Line_Width)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_width (Raw_Object, C.signed_int (Width));
-	end Set_Width;
-	
-	procedure Set_Unicode (
-		Object : in out Emitter;
-		Unicode : in Boolean)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_unicode (Raw_Object, Boolean'Pos (Unicode));
-	end Set_Unicode;
-	
-	procedure Set_Break (
-		Object : in out Emitter;
-		Break : in Line_Break)
-	is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
-	begin
-		C.yaml.yaml_emitter_set_break (
-			Raw_Object,
-			C.yaml.yaml_break_t'Enum_Val (Line_Break'Enum_Rep (Break)));
-	end Set_Break;
-	
-	procedure Put (Object : in out Emitter; Event : in YAML.Event) is
-		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
-			Controlled_Emitters.Reference (Object);
 		Ev : aliased C.yaml.yaml_event_t;
 		pragma Suppress_Initialization (Ev);
 	begin
@@ -868,6 +790,110 @@ package body YAML is
 		if C.yaml.yaml_emitter_emit (Raw_Object, Ev'Access) = 0 then
 			Raise_Error (Raw_Object.error, Raw_Object.problem, null);
 		end if;
+	end Emit;
+	
+	-- implementation of emitter
+	
+	function Create (Output : not null access procedure (Item : in String))
+		return Emitter
+	is
+		type O is access procedure (Item : in String);
+		function To_void_ptr is new Ada.Unchecked_Conversion (O, C.void_ptr);
+	begin
+		return Result : Emitter do
+			declare
+				Raw_Result : constant not null access C.yaml.yaml_emitter_t :=
+					Controlled_Emitters.Reference (Result);
+			begin
+				if C.yaml.yaml_emitter_initialize (Raw_Result) = 0 then
+					Raise_Error (Raw_Result.error, Raw_Result.problem, null);
+				end if;
+				C.yaml.yaml_emitter_set_output (
+					Raw_Result,
+					Write_Handler'Access,
+					To_void_ptr (Output));
+			end;
+		end return;
+	end Create;
+	
+	procedure Flush (Object : in out Emitter) is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		if C.yaml.yaml_emitter_flush (Raw_Object) = 0 then
+			Raise_Error (Raw_Object.error, Raw_Object.problem, null);
+		end if;
+	end Flush;
+	
+	procedure Set_Encoding (
+		Object : in out Emitter;
+		Encoding : in YAML.Encoding)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_encoding (
+			Raw_Object,
+			C.yaml.yaml_encoding_t'Enum_Val (YAML.Encoding'Enum_Rep (Encoding)));
+	end Set_Encoding;
+	
+	procedure Set_Canonical (
+		Object : in out Emitter;
+		Canonical : in Boolean)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_canonical (Raw_Object, Boolean'Pos (Canonical));
+	end Set_Canonical;
+	
+	procedure Set_Indent (
+		Object : in out Emitter;
+		Indent : in Indent_Width)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_indent (Raw_Object, C.signed_int (Indent));
+	end Set_Indent;
+	
+	procedure Set_Width (
+		Object : in out Emitter;
+		Width : in Line_Width)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_width (Raw_Object, C.signed_int (Width));
+	end Set_Width;
+	
+	procedure Set_Unicode (
+		Object : in out Emitter;
+		Unicode : in Boolean)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_unicode (Raw_Object, Boolean'Pos (Unicode));
+	end Set_Unicode;
+	
+	procedure Set_Break (
+		Object : in out Emitter;
+		Break : in Line_Break)
+	is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		C.yaml.yaml_emitter_set_break (
+			Raw_Object,
+			C.yaml.yaml_break_t'Enum_Val (Line_Break'Enum_Rep (Break)));
+	end Set_Break;
+	
+	procedure Put (Object : in out Emitter; Event : in YAML.Event) is
+		Raw_Object : constant not null access C.yaml.yaml_emitter_t :=
+			Controlled_Emitters.Reference (Object);
+	begin
+		Emit (Raw_Object, Event);
 	end Put;
 	
 	procedure Put_Document_Start (
@@ -880,10 +906,10 @@ package body YAML is
 			Controlled_Emitters.Reference (Object);
 	begin
 		if Raw_Object.state = C.yaml.YAML_EMIT_STREAM_START_STATE then
-			Put (Object, (Event_Type => Stream_Start, Encoding => Any));
+			Emit (Raw_Object, (Event_Type => Stream_Start, Encoding => Any));
 		end if;
-		Put (
-			Object,
+		Emit (
+			Raw_Object,
 			(Event_Type => Document_Start,
 				Implicit_Indicator => Implicit_Indicator,
 				Version_Directive => Version_Directive,
