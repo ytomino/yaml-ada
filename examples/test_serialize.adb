@@ -1,3 +1,4 @@
+with Ada.Characters.Latin_1;
 with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Environment_Variables;
@@ -121,6 +122,40 @@ begin
 				Ada.Streams.Stream_IO.Close (File);
 			end;
 			-- parser
+			declare
+				use Ada.Characters.Latin_1;
+				Source : constant String :=
+					"--- !ROOT-TAG" & LF
+					& "? [ complex_key ] : value" & LF
+					& "X: " & Mapping_Method_Type'Image (Mapping_Method) & LF
+					& "Y: TRUE" & LF
+					& "Z:" & LF
+					& " A: 100" & LF;
+				Source_First : Positive := Source'First;
+				procedure Read (Item : out String; Last : out Natural) is
+					R : constant Integer :=
+						Integer'Min (Item'Length - 1, Source'Last - Source_First);
+					Source_Last : constant Natural := Source_First + R;
+				begin
+					Last := Source'First + R;
+					Item (Item'First .. Last) := Source (Source_First .. Source_Last);
+					Source_First := Source_Last + 1;
+				end Read;
+				Data2 : T := (
+					X => Ada.Strings.Unbounded.Null_Unbounded_String,
+					Y => False,
+					Z => (A => 0));
+			begin
+				declare
+					R : aliased YAML.Parser := YAML.Create (Read'Access);
+				begin
+					IO (Serialization.YAML.Reading (R'Access, Root_Tag).Serializer, Data2);
+					YAML.Finish (R);
+				end;
+				if Data2 /= Data then
+					raise Program_Error;
+				end if;
+			end;
 			declare
 				File : Ada.Streams.Stream_IO.File_Type;
 				Data2 : T := (

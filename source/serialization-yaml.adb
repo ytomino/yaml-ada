@@ -204,12 +204,17 @@ package body Serialization.YAML is
 					Event : Standard.YAML.Event
 						renames Standard.YAML.Value (Parsing_Entry).Element.all;
 				begin
-					if Event.Event_Type = Standard.YAML.Scalar then
-						Object.Next_Name := new String'(Event.Value.all);
-					else
-						Handle (Object, Event); -- complex mapping key
-						return;
-					end if;
+					case Event.Event_Type is
+						when Standard.YAML.Scalar =>
+							Object.Next_Name := new String'(Event.Value.all);
+						when Standard.YAML.Mapping_Start | Standard.YAML.Sequence_Start =>
+							Handle (Object, Event); -- complex mapping key
+							Advance_Structure (Object, In_Mapping);
+							Free_And_Null (Object.Next_Name);
+						when others =>
+							Handle (Object, Event); -- leaving
+							return;
+					end case;
 				end;
 			end;
 		end if;
