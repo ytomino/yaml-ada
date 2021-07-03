@@ -509,26 +509,37 @@ package body YAML is
 	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Event_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.U.Event'Access);
+		return (Element =>
+			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U.Event'Access);
 	end Value;
 	
 	function Start_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.U.Start_Mark'Access);
+		return (Element =>
+			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
+				.Start_Mark'Access);
 	end Start_Mark;
 	
 	function End_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
 		return Mark_Reference_Type is
 	begin
-		return (Element => Parsing_Entry.Data.U.End_Mark'Access);
+		return (Element =>
+			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
+				.End_Mark'Access);
 	end End_Mark;
 	
 	procedure Get (
 		Object : in out Parser;
-		Parsing_Entry : out Parsing_Entry_Type) is
+		Parsing_Entry : out Parsing_Entry_Type)
+	is
+		procedure Process (Raw_Data : in out Parsed_Data_Type) is
+		begin
+			Parse (Object, Raw_Data);
+		end Process;
+		procedure Do_Get is new Controlled_Parsing_Entries.Update (Process);
 	begin
-		Parse (Object, Parsing_Entry.Data);
+		Do_Get (Parsing_Entry);
 	end Get;
 	
 	procedure Get_Document_Start (Object : in out Parser) is
@@ -556,12 +567,46 @@ package body YAML is
 	
 	-- private implementation of parser
 	
-	overriding procedure Finalize (Object : in out Parsing_Entry_Type) is
-	begin
-		if Object.Data.Delete /= null then
-			Object.Data.Delete (Object.Data);
-		end if;
-	end Finalize;
+	package body Controlled_Parsing_Entries is
+		
+		function Constant_Reference (Object : aliased Parsing_Entry_Type)
+			return not null access constant Parsed_Data_Type;
+		pragma Inline (Constant_Reference);
+		
+		function Constant_Reference (Object : aliased Parsing_Entry_Type)
+			return not null access constant Parsed_Data_Type is
+		begin
+			return Object.Data'Access;
+		end Constant_Reference;
+		
+		-- implementation
+		
+		function Constant_Reference (Object : aliased YAML.Parsing_Entry_Type)
+			return not null access constant Parsed_Data_Type is
+		begin
+			return Constant_Reference (Parsing_Entry_Type (Object));
+		end Constant_Reference;
+		
+		procedure Update (Object : in out YAML.Parsing_Entry_Type) is
+			procedure Update (Object : in out Parsing_Entry_Type);
+			pragma Inline (Update);
+			
+			procedure Update (Object : in out Parsing_Entry_Type) is
+			begin
+				Process (Object.Data);
+			end Update;
+		begin
+			Update (Parsing_Entry_Type (Object));
+		end Update;
+		
+		overriding procedure Finalize (Object : in out Parsing_Entry_Type) is
+		begin
+			if Object.Data.Delete /= null then
+				Object.Data.Delete (Object.Data);
+			end if;
+		end Finalize;
+		
+	end Controlled_Parsing_Entries;
 	
 	package body Controlled_Parsers is
 		

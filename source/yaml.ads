@@ -294,12 +294,32 @@ private
 		Delete : access procedure (Parsed_Data : in out Parsed_Data_Type) := null;
 	end record;
 	
-	type Parsing_Entry_Type is limited new Ada.Finalization.Limited_Controlled
-		with record
-			Data : aliased Parsed_Data_Type;
-		end record;
+	package Controlled_Parsing_Entries is
+		
+		type Parsing_Entry_Type is limited private;
+		pragma Preelaborable_Initialization (Parsing_Entry_Type);
+		
+		function Constant_Reference (Object : aliased YAML.Parsing_Entry_Type)
+			return not null access constant Parsed_Data_Type;
+		pragma Inline (Constant_Reference);
+		
+		generic
+			with procedure Process (Raw : in out Parsed_Data_Type);
+		procedure Update (Object : in out YAML.Parsing_Entry_Type);
+		pragma Inline (Update);
+		
+	private
+		
+		type Parsing_Entry_Type is limited new Ada.Finalization.Limited_Controlled
+			with record
+				Data : aliased Parsed_Data_Type;
+			end record;
+		
+		overriding procedure Finalize (Object : in out Parsing_Entry_Type);
+		
+	end Controlled_Parsing_Entries;
 	
-	overriding procedure Finalize (Object : in out Parsing_Entry_Type);
+	type Parsing_Entry_Type is new Controlled_Parsing_Entries.Parsing_Entry_Type;
 	
 	package Controlled_Parsers is
 		
