@@ -294,7 +294,7 @@ private
 		Delete : access procedure (Parsed_Data : in out Parsed_Data_Type) := null;
 	end record;
 	
-	type Parsing_Entry_Type is new Ada.Finalization.Limited_Controlled
+	type Parsing_Entry_Type is limited new Ada.Finalization.Limited_Controlled
 		with record
 			Data : aliased Parsed_Data_Type;
 		end record;
