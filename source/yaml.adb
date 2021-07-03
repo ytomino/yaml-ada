@@ -566,6 +566,9 @@ package body YAML is
 	package body Controlled_Parsers is
 		
 		procedure Update (Object : in out YAML.Parser) is
+			procedure Update (Object : in out Parser);
+			pragma Inline (Update);
+			
 			procedure Update (Object : in out Parser) is
 			begin
 				Process (Object.Raw.X'Access);
@@ -984,6 +987,9 @@ package body YAML is
 	package body Controlled_Emitters is
 		
 		procedure Update (Object : in out YAML.Emitter) is
+			procedure Update (Object : in out Emitter);
+			pragma Inline (Update);
+			
 			procedure Update (Object : in out Emitter) is
 			begin
 				Process (Object.Raw.X'Access);
