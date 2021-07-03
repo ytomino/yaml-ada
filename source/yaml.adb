@@ -431,7 +431,7 @@ package body YAML is
 		end Process;
 		procedure Do_Parse is new Controlled_Parsers.Update (Process);
 	begin
-		Do_Parse (Controlled_Parsers.Parser (Object));
+		Do_Parse (Object);
 	end Parse;
 	
 	procedure Parse_Expection (
@@ -444,7 +444,7 @@ package body YAML is
 		end Process;
 		procedure Do_Parse_Expection is new Controlled_Parsers.Update (Process);
 	begin
-		Do_Parse_Expection (Controlled_Parsers.Parser (Object));
+		Do_Parse_Expection (Object);
 	end Parse_Expection;
 	
 	-- implementation of parser
@@ -470,7 +470,7 @@ package body YAML is
 				end Process;
 				procedure Do_Create is new Controlled_Parsers.Update (Process);
 			begin
-				Do_Create (Controlled_Parsers.Parser (Result));
+				Do_Create (Result);
 			end;
 		end return;
 	end Create;
@@ -487,7 +487,7 @@ package body YAML is
 		end Process;
 		procedure Do_Set_Encoding is new Controlled_Parsers.Update (Process);
 	begin
-		Do_Set_Encoding (Controlled_Parsers.Parser (Object));
+		Do_Set_Encoding (Object);
 	end Set_Encoding;
 	
 	procedure Get (
@@ -541,7 +541,7 @@ package body YAML is
 		end Process;
 		procedure Do_Get_Document_Start is new Controlled_Parsers.Update (Process);
 	begin
-		Do_Get_Document_Start (Controlled_Parsers.Parser (Object));
+		Do_Get_Document_Start (Object);
 	end Get_Document_Start;
 	
 	procedure Get_Document_End (Object : in out Parser) is
@@ -565,9 +565,13 @@ package body YAML is
 	
 	package body Controlled_Parsers is
 		
-		procedure Update (Object : in out Parser) is
+		procedure Update (Object : in out YAML.Parser) is
+			procedure Update (Object : in out Parser) is
+			begin
+				Process (Object.Raw.X'Access);
+			end Update;
 		begin
-			Process (Object.Raw.X'Access);
+			Update (Parser (Object));
 		end Update;
 		
 		overriding procedure Finalize (Object : in out Parser) is
@@ -828,7 +832,7 @@ package body YAML is
 				end Process;
 				procedure Do_Create is new Controlled_Emitters.Update (Process);
 			begin
-				Do_Create (Controlled_Emitters.Emitter (Result));
+				Do_Create (Result);
 			end;
 		end return;
 	end Create;
@@ -842,7 +846,7 @@ package body YAML is
 		end Process;
 		procedure Do_Flush is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Flush (Controlled_Emitters.Emitter (Object));
+		Do_Flush (Object);
 	end Flush;
 	
 	procedure Set_Encoding (
@@ -857,7 +861,7 @@ package body YAML is
 		end Process;
 		procedure Do_Set_Encoding is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Set_Encoding (Controlled_Emitters.Emitter (Object));
+		Do_Set_Encoding (Object);
 	end Set_Encoding;
 	
 	procedure Set_Canonical (
@@ -870,7 +874,7 @@ package body YAML is
 		end Process;
 		procedure Do_Set_Canonical is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Set_Canonical (Controlled_Emitters.Emitter (Object));
+		Do_Set_Canonical (Object);
 	end Set_Canonical;
 	
 	procedure Set_Indent (
@@ -883,7 +887,7 @@ package body YAML is
 		end Process;
 		procedure Do_Set_Indent is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Set_Indent (Controlled_Emitters.Emitter (Object));
+		Do_Set_Indent (Object);
 	end Set_Indent;
 	
 	procedure Set_Width (
@@ -896,7 +900,7 @@ package body YAML is
 		end Process;
 		procedure Do_Set_Width is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Set_Width (Controlled_Emitters.Emitter (Object));
+		Do_Set_Width (Object);
 	end Set_Width;
 	
 	procedure Set_Unicode (
@@ -909,7 +913,7 @@ package body YAML is
 		end Process;
 		procedure Do_Set_Unicode is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Set_Unicode (Controlled_Emitters.Emitter (Object));
+		Do_Set_Unicode (Object);
 	end Set_Unicode;
 	
 	procedure Set_Break (
@@ -924,7 +928,7 @@ package body YAML is
 		end Process;
 		procedure Do_Set_Break is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Set_Break (Controlled_Emitters.Emitter (Object));
+		Do_Set_Break (Object);
 	end Set_Break;
 	
 	procedure Put (Object : in out Emitter; Event : in YAML.Event) is
@@ -934,7 +938,7 @@ package body YAML is
 		end Process;
 		procedure Do_Put is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Put (Controlled_Emitters.Emitter (Object));
+		Do_Put (Object);
 	end Put;
 	
 	procedure Put_Document_Start (
@@ -957,7 +961,7 @@ package body YAML is
 		end Process;
 		procedure Do_Put_Document_Start is new Controlled_Emitters.Update (Process);
 	begin
-		Do_Put_Document_Start (Controlled_Emitters.Emitter (Object));
+		Do_Put_Document_Start (Object);
 	end Put_Document_Start;
 	
 	procedure Put_Document_End (
@@ -979,9 +983,13 @@ package body YAML is
 	
 	package body Controlled_Emitters is
 		
-		procedure Update (Object : in out Emitter) is
+		procedure Update (Object : in out YAML.Emitter) is
+			procedure Update (Object : in out Emitter) is
+			begin
+				Process (Object.Raw.X'Access);
+			end Update;
 		begin
-			Process (Object.Raw.X'Access);
+			Update (Emitter (Object));
 		end Update;
 		
 		overriding procedure Finalize (Object : in out Emitter) is

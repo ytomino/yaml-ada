@@ -59,7 +59,7 @@ package body YAML.Streams is
 				end Process;
 				procedure Do_Create is new Controlled_Parsers.Update (Process);
 			begin
-				Do_Create (Controlled_Parsers.Parser (Result));
+				Do_Create (Result);
 			end;
 		end return;
 	end Create;
@@ -111,7 +111,7 @@ package body YAML.Streams is
 				end Process;
 				procedure Do_Create is new Controlled_Emitters.Update (Process);
 			begin
-				Do_Create (Controlled_Emitters.Emitter (Result));
+				Do_Create (Result);
 			end;
 		end return;
 	end Create;

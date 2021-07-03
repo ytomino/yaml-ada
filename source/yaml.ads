@@ -307,7 +307,7 @@ private
 		
 		generic
 			with procedure Process (Raw : not null access C.yaml.yaml_parser_t);
-		procedure Update (Object : in out Parser);
+		procedure Update (Object : in out YAML.Parser);
 		
 	private
 		
@@ -335,7 +335,7 @@ private
 		
 		generic
 			with procedure Process (Raw : not null access C.yaml.yaml_emitter_t);
-		procedure Update (Object : in out Emitter);
+		procedure Update (Object : in out YAML.Emitter);
 		
 	private
 		
