@@ -62,6 +62,13 @@ package body YAML is
 		end if;
 	end Length;
 	
+	function To_String (S : access constant C.char) return String is
+		Result : String (1 .. Length (S));
+		for Result'Address use To_Address (C.char_const_ptr (S));
+	begin
+		return Result;
+	end To_String;
+	
 	function New_String (S : C.yaml.yaml_char_t_ptr) return String_Access is
 	begin
 		if S = null then
@@ -111,10 +118,8 @@ package body YAML is
 	
 	function Version return String is
 		P : constant C.char_const_ptr := C.yaml.yaml_get_version_string;
-		S : String (1 .. Length (P));
-		for S'Address use To_Address (P);
 	begin
-		return S;
+		return To_String (P);
 	end Version;
 	
 	-- parser
