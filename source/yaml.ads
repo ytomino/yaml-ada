@@ -138,22 +138,6 @@ package YAML is
 	
 	-- parser
 	
-	type Parser (<>) is limited private;
-	
-	function Create (
-		Input : not null access procedure (Item : out String; Last : out Natural))
-		return Parser;
-	
-	procedure Set_Encoding (
-		Object : in out Parser;
-		Encoding : in YAML.Encoding);
-	
-	procedure Get (
-		Object : in out Parser;
-		Process : not null access procedure (
-			Event : in YAML.Event;
-			Start_Mark, End_Mark : in Mark));
-	
 	type Parsing_Entry_Type is limited private;
 	pragma Preelaborable_Initialization (Parsing_Entry_Type);
 	
@@ -174,6 +158,22 @@ package YAML is
 	pragma Inline (Value);
 	pragma Inline (Start_Mark);
 	pragma Inline (End_Mark);
+	
+	type Parser (<>) is limited private;
+	
+	function Create (
+		Input : not null access procedure (Item : out String; Last : out Natural))
+		return Parser;
+	
+	procedure Set_Encoding (
+		Object : in out Parser;
+		Encoding : in YAML.Encoding);
+	
+	procedure Get (
+		Object : in out Parser;
+		Process : not null access procedure (
+			Event : in YAML.Event;
+			Start_Mark, End_Mark : in Mark));
 	
 	procedure Get (
 		Object : in out Parser;

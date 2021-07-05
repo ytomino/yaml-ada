@@ -449,6 +449,29 @@ package body YAML is
 	
 	-- implementation of parser
 	
+	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
+		return Event_Reference_Type is
+	begin
+		return (Element =>
+			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U.Event'Access);
+	end Value;
+	
+	function Start_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
+		return Mark_Reference_Type is
+	begin
+		return (Element =>
+			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
+				.Start_Mark'Access);
+	end Start_Mark;
+	
+	function End_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
+		return Mark_Reference_Type is
+	begin
+		return (Element =>
+			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
+				.End_Mark'Access);
+	end End_Mark;
+	
 	function Create (
 		Input : not null access procedure (Item : out String; Last : out Natural))
 		return Parser
@@ -505,29 +528,6 @@ package body YAML is
 			End_Mark => Parsed_Data.U.End_Mark);
 		Parsed_Data.Delete (Parsed_Data);
 	end Get;
-	
-	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
-		return Event_Reference_Type is
-	begin
-		return (Element =>
-			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U.Event'Access);
-	end Value;
-	
-	function Start_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
-		return Mark_Reference_Type is
-	begin
-		return (Element =>
-			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
-				.Start_Mark'Access);
-	end Start_Mark;
-	
-	function End_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
-		return Mark_Reference_Type is
-	begin
-		return (Element =>
-			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
-				.End_Mark'Access);
-	end End_Mark;
 	
 	procedure Get (
 		Object : in out Parser;
