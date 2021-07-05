@@ -544,14 +544,13 @@ package body YAML is
 			Event : in YAML.Event;
 			Start_Mark, End_Mark : in Mark))
 	is
-		Parsed_Data : Parsed_Data_Type;
+		Parsing_Entry : aliased Parsing_Entry_Type;
 	begin
-		Parse (Object, Parsed_Data);
+		Get (Object, Parsing_Entry);
 		Process (
-			Parsed_Data.U.Event,
-			Start_Mark => Parsed_Data.U.Start_Mark,
-			End_Mark => Parsed_Data.U.End_Mark);
-		Parsed_Data.Delete (Parsed_Data);
+			Value (Parsing_Entry).Element.all,
+			Start_Mark => Start_Mark (Parsing_Entry).Element.all,
+			End_Mark => End_Mark (Parsing_Entry).Element.all);
 	end Get;
 	
 	procedure Get (
