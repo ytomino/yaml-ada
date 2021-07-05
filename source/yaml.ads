@@ -141,6 +141,9 @@ package YAML is
 	type Parsing_Entry_Type is limited private;
 	pragma Preelaborable_Initialization (Parsing_Entry_Type);
 	
+	function Is_Assigned (Parsing_Entry : Parsing_Entry_Type) return Boolean;
+	pragma Inline (Is_Assigned);
+	
 	type Event_Reference_Type (
 		Element : not null access constant Event) is null record
 		with Implicit_Dereference => Element;
@@ -302,6 +305,12 @@ private
 		function Constant_Reference (Object : aliased YAML.Parsing_Entry_Type)
 			return not null access constant Parsed_Data_Type;
 		pragma Inline (Constant_Reference);
+		
+		generic
+			type Result_Type (<>) is limited private;
+			with function Process (Raw : Parsed_Data_Type) return Result_Type;
+		function Query (Object : YAML.Parsing_Entry_Type) return Result_Type;
+		pragma Inline (Query);
 		
 		generic
 			with procedure Process (Raw : in out Parsed_Data_Type);

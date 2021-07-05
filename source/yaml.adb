@@ -449,15 +449,32 @@ package body YAML is
 	
 	-- implementation of parser
 	
+	function Is_Assigned (Parsing_Entry : Parsing_Entry_Type) return Boolean is
+		function Process (Raw_Data : Parsed_Data_Type) return Boolean is
+		begin
+			return Raw_Data.Delete /= null;
+		end Process;
+		function Do_Is_Assigned is
+			new Controlled_Parsing_Entries.Query (Boolean, Process);
+	begin
+		return Do_Is_Assigned (Parsing_Entry);
+	end Is_Assigned;
+	
 	function Value (Parsing_Entry : aliased Parsing_Entry_Type)
-		return Event_Reference_Type is
+		return Event_Reference_Type
+	is
+		pragma Check (Pre,
+			Check => Is_Assigned (Parsing_Entry) or else raise Status_Error);
 	begin
 		return (Element =>
 			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U.Event'Access);
 	end Value;
 	
 	function Start_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
-		return Mark_Reference_Type is
+		return Mark_Reference_Type
+	is
+		pragma Check (Pre,
+			Check => Is_Assigned (Parsing_Entry) or else raise Status_Error);
 	begin
 		return (Element =>
 			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
@@ -465,7 +482,10 @@ package body YAML is
 	end Start_Mark;
 	
 	function End_Mark (Parsing_Entry : aliased Parsing_Entry_Type)
-		return Mark_Reference_Type is
+		return Mark_Reference_Type
+	is
+		pragma Check (Pre,
+			Check => Is_Assigned (Parsing_Entry) or else raise Status_Error);
 	begin
 		return (Element =>
 			Controlled_Parsing_Entries.Constant_Reference (Parsing_Entry).U
@@ -533,6 +553,8 @@ package body YAML is
 		Object : in out Parser;
 		Parsing_Entry : out Parsing_Entry_Type)
 	is
+		pragma Check (Pre,
+			Check => not Is_Assigned (Parsing_Entry) or else raise Status_Error);
 		procedure Process (Raw_Data : in out Parsed_Data_Type) is
 		begin
 			Parse (Object, Raw_Data);
@@ -586,6 +608,18 @@ package body YAML is
 		begin
 			return Constant_Reference (Parsing_Entry_Type (Object));
 		end Constant_Reference;
+		
+		function Query (Object : YAML.Parsing_Entry_Type) return Result_Type is
+			function Query (Object : Parsing_Entry_Type) return Result_Type;
+			pragma Inline (Query);
+			
+			function Query (Object : Parsing_Entry_Type) return Result_Type is
+			begin
+				return Process (Object.Data);
+			end Query;
+		begin
+			return Query (Parsing_Entry_Type (Object));
+		end Query;
 		
 		procedure Update (Object : in out YAML.Parsing_Entry_Type) is
 			procedure Update (Object : in out Parsing_Entry_Type);
