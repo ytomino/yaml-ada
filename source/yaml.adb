@@ -592,6 +592,31 @@ package body YAML is
 		Parse_Expection (Object, C.yaml.YAML_STREAM_END_EVENT);
 	end Finish;
 	
+	function Last_Error_Mark (Object : Parser) return Mark is
+		function Process (Raw_Object : not null access constant C.yaml.yaml_parser_t)
+			return Mark is
+		begin
+			return (Index => Integer (Raw_Object.problem_mark.index),
+				Line => Integer (Raw_Object.problem_mark.line),
+				Column => Integer (Raw_Object.problem_mark.column));
+		end Process;
+		function Do_Last_Error_Mark is new Controlled_Parsers.Query (Mark, Process);
+	begin
+		return Do_Last_Error_Mark (Object);
+	end Last_Error_Mark;
+	
+	function Last_Error_Message (Object : Parser) return String is
+		function Process (Raw_Object : not null access constant C.yaml.yaml_parser_t)
+			return String is
+		begin
+			return To_String (Raw_Object.problem);
+		end Process;
+		function Do_Last_Error_Message is
+			new Controlled_Parsers.Query (String, Process);
+	begin
+		return Do_Last_Error_Message (Object);
+	end Last_Error_Message;
+	
 	-- private implementation of parser
 	
 	package body Controlled_Parsing_Entries is
@@ -648,6 +673,18 @@ package body YAML is
 	end Controlled_Parsing_Entries;
 	
 	package body Controlled_Parsers is
+		
+		function Query (Object : YAML.Parser) return Result_Type is
+			function Query (Object : Parser) return Result_Type;
+			pragma Inline (Query);
+			
+			function Query (Object : Parser) return Result_Type is
+			begin
+				return Process (Object.Raw.X'Access);
+			end Query;
+		begin
+			return Query (Parser (Object));
+		end Query;
 		
 		procedure Update (Object : in out YAML.Parser) is
 			procedure Update (Object : in out Parser);

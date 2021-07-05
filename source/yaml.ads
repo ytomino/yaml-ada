@@ -187,6 +187,9 @@ package YAML is
 	
 	procedure Finish (Object : in out Parser);
 	
+	function Last_Error_Mark (Object : Parser) return Mark;
+	function Last_Error_Message (Object : Parser) return String;
+	
 	-- emitter
 	
 	type Emitter (<>) is limited private;
@@ -333,6 +336,13 @@ private
 	package Controlled_Parsers is
 		
 		type Parser is limited private;
+		
+		generic
+			type Result_Type (<>) is limited private;
+			with function Process (Raw : not null access constant C.yaml.yaml_parser_t)
+				return Result_Type;
+		function Query (Object : YAML.Parser) return Result_Type;
+		pragma Inline (Query);
 		
 		generic
 			with procedure Process (Raw : not null access C.yaml.yaml_parser_t);
