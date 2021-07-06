@@ -129,13 +129,6 @@ package YAML is
 	Sequence_Tag : constant String := "tag:yaml.org,2002:seq";
 	Mapping_Tag : constant String := "tag:yaml.org,2002:map";
 	
-	Default_Scalar_Tag : String
-		renames String_Tag;
-	Default_Sequence_tag : String
-		renames Sequence_Tag;
-	Default_Mapping_Tag : String
-		renames Mapping_Tag;
-	
 	-- parser
 	
 	type Parsing_Entry_Type is limited private;
