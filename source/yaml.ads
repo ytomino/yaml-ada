@@ -120,14 +120,24 @@ package YAML is
 		end case;
 	end record;
 	
-	Null_Tag : constant String := "tag:yaml.org,2002:null";
+	-- scalar
+	Binary_Tag : constant String := "tag:yaml.org,2002:binary";
 	Boolean_Tag : constant String := "tag:yaml.org,2002:bool";
-	String_Tag : constant String := "tag:yaml.org,2002:str";
+	Float_Tag : constant String := "tag:yaml.org,2002:float"; -- Floating-Point
 	Integer_Tag : constant String := "tag:yaml.org,2002:int";
-	Float_Tag : constant String := "tag:yaml.org,2002:float";
-	Time_Tag : constant String := "tag:yaml.org,2002:timestamp";
+	Merge_Key_Tag : constant String := "tag:yaml.org,2002:merge";
+	Null_Tag : constant String := "tag:yaml.org,2002:null";
+	String_Tag : constant String := "tag:yaml.org,2002:str";
+	Time_Tag : constant String := "tag:yaml.org,2002:timestamp"; -- Timestamp
+	Value_Key_Tag : constant String := "tag:yaml.org,2002:value";
+	YAML_Encoding_Key_Tag : constant String := "tag:yaml.org,2002:yaml";
+	-- sequence
+	Ordered_Mapping_Tag : constant String := "tag:yaml.org,2002:omap";
+	Pairs_Tag : constant String := "tag:yaml.org,2002:pairs";
 	Sequence_Tag : constant String := "tag:yaml.org,2002:seq";
-	Mapping_Tag : constant String := "tag:yaml.org,2002:map";
+	-- mapping
+	Mapping_Tag : constant String := "tag:yaml.org,2002:map"; -- Unordered Mapping
+	Set_Tag : constant String := "tag:yaml.org,2002:set";
 	
 	-- parser
 	
