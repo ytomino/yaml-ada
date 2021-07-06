@@ -228,7 +228,6 @@ package body YAML is
 			when C.yaml.YAML_DOCUMENT_START_EVENT =>
 				declare
 					Version_Directive : Version_Directive_Access;
-					Tag_Directives : Tag_Directive_Array_Access;
 				begin
 					if Ev.data.document_start.version_directive = null then
 						Version_Directive := null;
@@ -239,38 +238,41 @@ package body YAML is
 						Version_Directive.Minor :=
 							Integer (Ev.data.document_start.version_directive.minor);
 					end if;
-					if Ev.data.document_start.tag_directives.start /= null then
-						declare
-							function Cast is
-								new Ada.Unchecked_Conversion (C.yaml.yaml_tag_directive_t_ptr, C.ptrdiff_t);
-							function Cast is
-								new Ada.Unchecked_Conversion (C.ptrdiff_t, C.yaml.yaml_tag_directive_t_ptr);
-							sizeof_yaml_tag_directive_t : constant C.ptrdiff_t :=
-								C.yaml.yaml_tag_directive_t'Size / Standard'Storage_Unit;
-							Length : constant Natural :=
-								Natural (
-									(Cast (Ev.data.document_start.tag_directives.F_end)
-											- Cast (Ev.data.document_start.tag_directives.start))
-										/ sizeof_yaml_tag_directive_t);
-							P : C.yaml.yaml_tag_directive_t_ptr;
-						begin
-							Tag_Directives := new Tag_Directive_Array (1 .. Length);
-							P := Ev.data.document_start.tag_directives.start;
-							for I in 1 .. Length loop
-								Tag_Directives (I).Handle := New_String (P.handle);
-								Tag_Directives (I).Prefix := New_String (P.prefix);
-								P := Cast (Cast (P) + sizeof_yaml_tag_directive_t);
-							end loop;
-						end;
-					end if;
 					Parsed_Data.U.Event :=
 						Event'(
 							Event_Type => Document_Start,
 							Version_Directive => Version_Directive,
-							Tag_Directives => Tag_Directives,
+							Tag_Directives => null,
 							Implicit_Indicator => Ev.data.document_start.implicit /= 0);
 				end;
 				Parsed_Data.Delete := Delete_Document_Start_Event'Access;
+				-- allocating Tag_Directives
+				if Ev.data.document_start.tag_directives.start /= null then
+					declare
+						function Cast is
+							new Ada.Unchecked_Conversion (C.yaml.yaml_tag_directive_t_ptr, C.ptrdiff_t);
+						function Cast is
+							new Ada.Unchecked_Conversion (C.ptrdiff_t, C.yaml.yaml_tag_directive_t_ptr);
+						sizeof_yaml_tag_directive_t : constant C.ptrdiff_t :=
+							C.yaml.yaml_tag_directive_t'Size / Standard'Storage_Unit;
+						Length : constant Natural :=
+							Natural (
+								(Cast (Ev.data.document_start.tag_directives.F_end)
+										- Cast (Ev.data.document_start.tag_directives.start))
+									/ sizeof_yaml_tag_directive_t);
+						Tag_Directives : Tag_Directive_Array_Access;
+						P : C.yaml.yaml_tag_directive_t_ptr;
+					begin
+						Tag_Directives := new Tag_Directive_Array (1 .. Length);
+						Parsed_Data.U.Event.Tag_Directives := Tag_Directives; -- hold into RAII
+						P := Ev.data.document_start.tag_directives.start;
+						for I in 1 .. Length loop
+							Tag_Directives (I).Handle := New_String (P.handle);
+							Tag_Directives (I).Prefix := New_String (P.prefix);
+							P := Cast (Cast (P) + sizeof_yaml_tag_directive_t);
+						end loop;
+					end;
+				end if;
 			when C.yaml.YAML_DOCUMENT_END_EVENT =>
 				Parsed_Data.U.Event :=
 					Event'(
