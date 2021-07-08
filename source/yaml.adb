@@ -559,10 +559,12 @@ package body YAML is
 		Object : in out Parser;
 		Parsing_Entry : out Parsing_Entry_Type)
 	is
-		pragma Check (Pre,
-			Check => not Is_Assigned (Parsing_Entry) or else raise Status_Error);
 		procedure Process (Raw_Data : in out Parsed_Data_Type) is
 		begin
+			if Raw_Data.Delete /= null then
+				Raw_Data.Delete (Raw_Data);
+				Raw_Data.Delete := null;
+			end if;
 			Parse (Object, Raw_Data);
 		end Process;
 		procedure Do_Get is new Controlled_Parsing_Entries.Update (Process);
