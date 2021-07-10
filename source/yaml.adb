@@ -14,8 +14,7 @@ package body YAML is
 	use type C.yaml.yaml_tag_directive_t_ptr;
 	use type C.yaml.yaml_version_directive_t_ptr;
 	
-	function strdup (S : access constant String)
-		return C.yaml.yaml_char_t_ptr is
+	function strdup (S : access constant String) return C.yaml.yaml_char_t_ptr is
 	begin
 		if S = null then
 			return null;
@@ -44,8 +43,7 @@ package body YAML is
 	end strdup;
 	
 	type String_Access is access String;
-	procedure Free is
-		new Ada.Unchecked_Deallocation (String, String_Access);
+	procedure Free is new Ada.Unchecked_Deallocation (String, String_Access);
 	
 	function To_char_const_ptr is
 		new Ada.Unchecked_Conversion (C.yaml.yaml_char_t_ptr, C.char_const_ptr);
@@ -284,8 +282,7 @@ package body YAML is
 					-- anchor
 					Anchor_S : aliased
 						String (1 .. Length (To_char_const_ptr (Ev.data.alias.anchor)));
-					for Anchor_S'Address use
-						To_Address (To_char_const_ptr (Ev.data.alias.anchor));
+					for Anchor_S'Address use To_Address (To_char_const_ptr (Ev.data.alias.anchor));
 					Anchor_A : constant String_Access :=
 						Copy_String_Access (
 							Anchor_S'Unrestricted_Access,
@@ -306,10 +303,8 @@ package body YAML is
 							Anchor_S'Unrestricted_Access,
 							Parsed_Data.U.Anchor_Constraint'Access);
 					-- tag
-					Tag_S : aliased
-						String (1 .. Length (To_char_const_ptr (Ev.data.scalar.tag)));
-					for Tag_S'Address use
-						To_Address (To_char_const_ptr (Ev.data.scalar.tag));
+					Tag_S : aliased String (1 .. Length (To_char_const_ptr (Ev.data.scalar.tag)));
+					for Tag_S'Address use To_Address (To_char_const_ptr (Ev.data.scalar.tag));
 					Tag_A : constant String_Access :=
 						Copy_String_Access (
 							Tag_S'Unrestricted_Access,
@@ -428,10 +423,7 @@ package body YAML is
 	
 	-- parser: wrappers
 	
-	procedure Parse (
-		Object : in out Parser;
-		Parsed_Data : out Parsed_Data_Type)
-	is
+	procedure Parse (Object : in out Parser; Parsed_Data : out Parsed_Data_Type) is
 		procedure Process (Raw_Object : not null access C.yaml.yaml_parser_t) is
 		begin
 			Parse (Raw_Object, Parsed_Data);
@@ -525,10 +517,7 @@ package body YAML is
 		end return;
 	end Create;
 	
-	procedure Set_Encoding (
-		Object : in out Parser;
-		Encoding : in YAML.Encoding)
-	is
+	procedure Set_Encoding (Object : in out Parser; Encoding : in YAML.Encoding) is
 		procedure Process (Raw_Object : not null access C.yaml.yaml_parser_t) is
 		begin
 			C.yaml.yaml_parser_set_encoding (
@@ -991,10 +980,7 @@ package body YAML is
 		Do_Set_Encoding (Object);
 	end Set_Encoding;
 	
-	procedure Set_Canonical (
-		Object : in out Emitter;
-		Canonical : in Boolean)
-	is
+	procedure Set_Canonical (Object : in out Emitter; Canonical : in Boolean) is
 		procedure Process (Raw_Object : not null access C.yaml.yaml_emitter_t) is
 		begin
 			C.yaml.yaml_emitter_set_canonical (Raw_Object, Boolean'Pos (Canonical));
@@ -1004,10 +990,7 @@ package body YAML is
 		Do_Set_Canonical (Object);
 	end Set_Canonical;
 	
-	procedure Set_Indent (
-		Object : in out Emitter;
-		Indent : in Indent_Width)
-	is
+	procedure Set_Indent (Object : in out Emitter; Indent : in Indent_Width) is
 		procedure Process (Raw_Object : not null access C.yaml.yaml_emitter_t) is
 		begin
 			C.yaml.yaml_emitter_set_indent (Raw_Object, C.signed_int (Indent));
@@ -1017,10 +1000,7 @@ package body YAML is
 		Do_Set_Indent (Object);
 	end Set_Indent;
 	
-	procedure Set_Width (
-		Object : in out Emitter;
-		Width : in Line_Width)
-	is
+	procedure Set_Width (Object : in out Emitter; Width : in Line_Width) is
 		procedure Process (Raw_Object : not null access C.yaml.yaml_emitter_t) is
 		begin
 			C.yaml.yaml_emitter_set_width (Raw_Object, C.signed_int (Width));
@@ -1030,10 +1010,7 @@ package body YAML is
 		Do_Set_Width (Object);
 	end Set_Width;
 	
-	procedure Set_Unicode (
-		Object : in out Emitter;
-		Unicode : in Boolean)
-	is
+	procedure Set_Unicode (Object : in out Emitter; Unicode : in Boolean) is
 		procedure Process (Raw_Object : not null access C.yaml.yaml_emitter_t) is
 		begin
 			C.yaml.yaml_emitter_set_unicode (Raw_Object, Boolean'Pos (Unicode));
@@ -1043,10 +1020,7 @@ package body YAML is
 		Do_Set_Unicode (Object);
 	end Set_Unicode;
 	
-	procedure Set_Break (
-		Object : in out Emitter;
-		Break : in Line_Break)
-	is
+	procedure Set_Break (Object : in out Emitter; Break : in Line_Break) is
 		procedure Process (Raw_Object : not null access C.yaml.yaml_emitter_t) is
 		begin
 			C.yaml.yaml_emitter_set_break (
@@ -1136,8 +1110,7 @@ package body YAML is
 		Problem : access constant C.char;
 		Mark : access constant C.yaml.yaml_mark_t)
 	is
-		function Image (Mark : access constant C.yaml.yaml_mark_t)
-			return String is
+		function Image (Mark : access constant C.yaml.yaml_mark_t) return String is
 		begin
 			if Mark = null then
 				return "";

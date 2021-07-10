@@ -171,9 +171,7 @@ package YAML is
 		Input : not null access procedure (Item : out String; Last : out Natural))
 		return Parser;
 	
-	procedure Set_Encoding (
-		Object : in out Parser;
-		Encoding : in YAML.Encoding);
+	procedure Set_Encoding (Object : in out Parser; Encoding : in YAML.Encoding);
 	
 	procedure Get (
 		Object : in out Parser;

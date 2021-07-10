@@ -91,10 +91,7 @@ package body Serialization.YAML is
 		end case;
 	end Handle;
 	
-	procedure Advance_Start (
-		Object : not null access Reader;
-		Tag : in String)
-	is
+	procedure Advance_Start (Object : not null access Reader; Tag : in String) is
 		Parsing_Entry : aliased Standard.YAML.Parsing_Entry_Type;
 	begin
 		Standard.YAML.Get (Object.Parser.all, Parsing_Entry);

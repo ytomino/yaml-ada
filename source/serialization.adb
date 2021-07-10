@@ -250,12 +250,7 @@ package body Serialization is
 								Position : Cursor;
 								Inserted : Boolean;
 							begin
-								Insert (
-									Value,
-									Next_Name (Object.Reader).all,
-									Default,
-									Position,
-									Inserted);
+								Insert (Value, Next_Name (Object.Reader).all, Default, Position, Inserted);
 								if not Inserted then
 									raise Constraint_Error;
 								end if;
@@ -314,19 +309,11 @@ package body Serialization is
 								Position : Cursor;
 								Inserted : Boolean;
 							begin
-								Insert (
-									Value,
-									Next_Name (Object.Reader).all,
-									Default,
-									Position,
-									Inserted);
+								Insert (Value, Next_Name (Object.Reader).all, Default, Position, Inserted);
 								if not Inserted then
 									raise Constraint_Error;
 								end if;
-								Callback (
-									Object,
-									Key (Position),
-									Reference (Value, Position).Element.all);
+								Callback (Object, Key (Position), Reference (Value, Position).Element.all);
 							end;
 							Advance_Structure (Object.Reader, In_Mapping);
 						end loop;
@@ -337,10 +324,7 @@ package body Serialization is
 						I : Cursor := First (Value);
 					begin
 						while Has_Element (I) loop
-							Callback (
-								Object,
-								Key (I),
-								Reference (Value, I).Element.all);
+							Callback (Object, Key (I), Reference (Value, I).Element.all);
 							I := Next (I);
 						end loop;
 					end;
