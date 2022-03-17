@@ -42,14 +42,14 @@ Build examples
 
 1. Link the translated headers to `examples/import`. ::
 
-    $ mkdir -p examples/import/$(gcc -dumpmachine)
-    $ ln -s import-dir examples/import/$(gcc -dumpmachine)
+    $ mkdir yaml-ada/examples/import
+    $ ln -s $PWD/import-dir yaml-ada/examples/import/$(gcc -dumpmachine)
    
    If this step is omitted, headmaster will be used.
 
 2. Build them. ::
 
-    $ make -C examples
+    $ make -C yaml-ada/examples
 
 License
 -------
