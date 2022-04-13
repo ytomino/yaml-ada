@@ -29,7 +29,7 @@ ifneq ($(WITH_YAML),)
 YAML_LFLAGS=-L$(WITH_YAML)/lib
 YAML_HFLAGS=-I$(WITH_YAML)/include
 else
-YAML_LFLAGS:=$(shell pkg-config --libs yaml-0.1)
+YAML_LFLAGS:=$(shell pkg-config --libs-only-L yaml-0.1)
 YAML_HFLAGS:=$(shell pkg-config --cflags-only-I yaml-0.1)
 endif
 LFLAGS+=$(YAML_LFLAGS)
