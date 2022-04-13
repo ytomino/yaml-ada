@@ -24,9 +24,16 @@ LFLAGS=-ggdb
 HFLAGS=
 
 ifeq ($(TARGET),$(HOST))
-LFLAGS:=$(shell pkg-config --libs yaml-0.1)
-YAML_INCDIR:=$(shell pkg-config --variable=includedir yaml-0.1)
-HFLAGS+=$(addprefix -I,$(YAML_INCDIR))
+WITH_YAML?=
+ifneq ($(WITH_YAML),)
+YAML_LFLAGS=-L$(WITH_YAML)/lib
+YAML_HFLAGS=-I$(WITH_YAML)/include
+else
+YAML_LFLAGS:=$(shell pkg-config --libs yaml-0.1)
+YAML_HFLAGS:=$(shell pkg-config --cflags-only-I yaml-0.1)
+endif
+LFLAGS+=$(YAML_LFLAGS)
+HFLAGS+=$(YAML_HFLAGS)
 endif
 
 ifneq ($(DRAKE_RTSROOT),)
