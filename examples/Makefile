@@ -6,11 +6,11 @@ TARGET=$(HOST)
 BUILDDIR=$(TARGET).noindex
 
 ifeq ($(TARGET),$(HOST))
-GCCPREFIX=
-BINLN=bin
+ GCCPREFIX=
+ BINLN=bin
 else
-GCCPREFIX=$(TARGET)-
-BINLN=
+ GCCPREFIX=$(TARGET)-
+ BINLN=
 endif
 GCCSUFFIX=
 GCC=$(GCCPREFIX)gcc$(GCCSUFFIX)
@@ -24,39 +24,39 @@ LFLAGS=-ggdb
 HFLAGS=
 
 ifeq ($(TARGET),$(HOST))
-WITH_YAML?=
-ifneq ($(WITH_YAML),)
-YAML_LFLAGS=-L$(WITH_YAML)/lib
-YAML_HFLAGS=-I$(WITH_YAML)/include
-else
-YAML_LFLAGS:=$(shell pkg-config --libs-only-L yaml-0.1)
-YAML_HFLAGS:=$(shell pkg-config --cflags-only-I yaml-0.1)
-endif
-LFLAGS+=$(YAML_LFLAGS)
-HFLAGS+=$(YAML_HFLAGS)
+ WITH_YAML?=
+ ifneq ($(WITH_YAML),)
+  YAML_LFLAGS=-L$(WITH_YAML)/lib
+  YAML_HFLAGS=-I$(WITH_YAML)/include
+ else
+  YAML_LFLAGS:=$(shell pkg-config --libs-only-L yaml-0.1)
+  YAML_HFLAGS:=$(shell pkg-config --cflags-only-I yaml-0.1)
+ endif
+ LFLAGS+=$(YAML_LFLAGS)
+ HFLAGS+=$(YAML_HFLAGS)
 endif
 
 ifneq ($(DRAKE_RTSROOT),)
-VERSION:=$(shell $(GCC) -dumpversion)
-DRAKE_RTSDIR=$(DRAKE_RTSROOT)/$(TARGET)/$(VERSION)
+ VERSION:=$(shell $(GCC) -dumpversion)
+ DRAKE_RTSDIR=$(DRAKE_RTSROOT)/$(TARGET)/$(VERSION)
 endif
 ifneq ($(DRAKE_RTSDIR),)
-IMPORTDIR=
-GFLAGS+=--RTS=$(abspath $(DRAKE_RTSDIR))
+ IMPORTDIR=
+ GFLAGS+=--RTS=$(abspath $(DRAKE_RTSDIR))
 else
-ifneq ($(wildcard import/$(TARGET)),)
-IMPORTDIR=import/$(TARGET)
-else
-IMPORTDIR=$(BUILDDIR)/import
-endif
-MFLAGS+=-I$(IMPORTDIR)
+ ifneq ($(wildcard import/$(TARGET)),)
+  IMPORTDIR=import/$(TARGET)
+ else
+  IMPORTDIR=$(BUILDDIR)/import
+ endif
+ MFLAGS+=-I$(IMPORTDIR)
 endif
 
 ifneq ($(GCC),gcc)
-GFLAGS+=$(filter -m32 -m64,$(GCC))
-MFLAGS+=--GCC="$(GCC)"
-LFLAGS+=--GCC="$(GCC)"
-HFLAGS+=-gcc="$(GCC)"
+ GFLAGS+=$(filter -m32 -m64,$(GCC))
+ MFLAGS+=--GCC="$(GCC)"
+ LFLAGS+=--GCC="$(GCC)"
+ HFLAGS+=-gcc="$(GCC)"
 endif
 
 EXAMPLES=$(basename $(filter-out b~%,$(wildcard *.adb)))
